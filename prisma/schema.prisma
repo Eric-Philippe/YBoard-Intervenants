@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Promos {
+  id         String         @id @default(uuid()) @map("Id_Promo")
+  level      String         @db.VarChar(50)
+  specialty  String         @db.VarChar(50)
+  promoModules PromoModules[]
+
+  @@map("Promos")
+}
+
+model Modules {
+  id           String         @id @default(uuid()) @map("Id_Module")
+  name         String         @db.VarChar(50)
+  promoModules PromoModules[]
+
+  @@map("Modules")
+}
+
+model Teacher {
+  id           String      @id @default(uuid()) @map("Id_Teacher")
+  lastname     String      @db.VarChar(50)
+  firstname    String      @db.VarChar(50)
+  status       String?     @db.VarChar(50)
+  diploma      String?     @db.VarChar(50)
+  comments     String?     @db.Text
+  rate         Decimal?    @db.Decimal(5,2)
+  email_perso  String?     @db.VarChar(50)
+  email_ynov   String?     @db.VarChar(50)
+  phone_number String?     @db.VarChar(10)
+  ongoing      ongoing[]
+  potential    potential[]
+  selected     selected[]
+
+  @@map("Teacher")
+}
+
+model PromoModules {
+  id        String      @id @default(uuid()) @map("Id_PromoModules")
+  moduleId  String      @map("Id_Module")
+  promoId   String      @map("Id_Promo")
+  workload  Int
+  module    Modules     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  promo     Promos      @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  ongoing   ongoing[]
+  potential potential[]
+  selected  selected[]
+
+  @@map("PromoModules")
+}
+
+model ongoing {
+  teacherId       String       @map("Id_Teacher")
+  promoModulesId  String       @map("Id_PromoModules")
+  workload        Int
+  teacher         Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules    PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("ongoing")
+}
+
+model potential {
+  teacherId           String       @map("Id_Teacher")
+  promoModulesId      String       @map("Id_PromoModules")
+  workload            Int
+  interview_date      DateTime?    @db.Date
+  interview_comments  String?      @db.Text
+  decision            Boolean?
+  teacher             Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules        PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("potential")
+}
+
+model selected {
+  teacherId       String       @map("Id_Teacher")
+  promoModulesId  String       @map("Id_PromoModules")
+  workload        Int
+  teacher         Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules    PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("selected")
+}
+
+model Users {
+  id             String    @id @default(uuid()) @map("Id_Users")
+  firstname      String    @db.VarChar(50)
+  lastname       String    @db.VarChar(50)
+  email          String    @db.VarChar(50)
+  password       String?   @db.VarChar(255)
+  last_connected DateTime? @db.Timestamp(6)
+
+  @@map("Users")
+}
