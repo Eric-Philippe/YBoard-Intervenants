@@ -51,35 +51,35 @@ This platform addresses the specific needs of Ynov Toulouse school to:
 erDiagram
     Users {
         uuid Id_Users PK
-        varchar(50) firstname "NOT NULL"
-        varchar(50) lastname "NOT NULL"
-        varchar(50) email "NOT NULL"
-        varchar(255) password "NULL"
+        varchar_50 firstname "NOT NULL"
+        varchar_50 lastname "NOT NULL"
+        varchar_50 email "NOT NULL"
+        varchar_255 password "NULL"
         timestamp last_connected "NULL"
     }
 
     Promos {
         uuid Id_Promo PK
-        varchar(50) level "NOT NULL"
-        varchar(50) specialty "NOT NULL"
+        varchar_50 level "NOT NULL"
+        varchar_50 specialty "NOT NULL"
     }
 
     Modules {
         uuid Id_Module PK
-        varchar(50) name "NOT NULL"
+        varchar_50 name "NOT NULL"
     }
 
     Teacher {
         uuid Id_Teacher PK
-        varchar(50) lastname "NOT NULL"
-        varchar(50) firstname "NOT NULL"
-        varchar(50) status "NULL"
-        varchar(50) diploma "NULL"
+        varchar_50 lastname "NOT NULL"
+        varchar_50 firstname "NOT NULL"
+        varchar_50 status "NULL"
+        varchar_50 diploma "NULL"
         text comments "NULL"
-        decimal(5,2) rate "NULL"
-        varchar(50) email_perso "NULL"
-        varchar(50) email_ynov "NULL"
-        varchar(10) phone_number "NULL"
+        decimal_5_2 rate "NULL"
+        varchar_50 email_perso "NULL"
+        varchar_50 email_ynov "NULL"
+        varchar_10 phone_number "NULL"
     }
 
     PromoModules {
