@@ -12,7 +12,7 @@ import { AppLayout } from "~/components";
 
 export const metadata: Metadata = {
   title: "YBoard - Intervenants Ynov",
-  description: "Application de sourcing des intervenants Ynov",
+  description: "Application de gestion des intervenants Ynov",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
