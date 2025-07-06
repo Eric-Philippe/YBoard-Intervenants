@@ -37,7 +37,9 @@ model Teacher {
   rate         Decimal?    @db.Decimal(5,2)
   email_perso  String?     @db.VarChar(50)
   email_ynov   String?     @db.VarChar(50)
-  phone_number String?     @db.VarChar(10)
+  phone_number String?     @db.VarChar(20)
+  cv_filename  String?     @db.VarChar(255)
+  cv_uploaded_at DateTime? @db.Timestamp(6)
   ongoing      ongoing[]
   potential    potential[]
   selected     selected[]

@@ -8,7 +8,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 // Import types and components
 import type { Promo, PromoModule, TeacherRelation } from "./types";
-import { calculateWorkloadStats } from "./utils";
+import { calculateWorkloadStats, transformPromoModule } from "./utils";
 import {
   PromoSelection,
   ModuleSelection,
@@ -47,7 +47,8 @@ function ModuleDetailsContent() {
         const updatedModules = await utils.modules.getByPromo.fetch({
           promoId: selectedPromo.id,
         });
-        const updatedModule = updatedModules.find(
+        const transformedModules = updatedModules.map(transformPromoModule);
+        const updatedModule = transformedModules.find(
           (m) => m.id === selectedModule?.id,
         );
         if (updatedModule) {
@@ -64,7 +65,8 @@ function ModuleDetailsContent() {
         const updatedModules = await utils.modules.getByPromo.fetch({
           promoId: selectedPromo.id,
         });
-        const updatedModule = updatedModules.find(
+        const transformedModules = updatedModules.map(transformPromoModule);
+        const updatedModule = transformedModules.find(
           (m) => m.id === selectedModule?.id,
         );
         if (updatedModule) {
@@ -81,7 +83,8 @@ function ModuleDetailsContent() {
         const updatedModules = await utils.modules.getByPromo.fetch({
           promoId: selectedPromo.id,
         });
-        const updatedModule = updatedModules.find(
+        const transformedModules = updatedModules.map(transformPromoModule);
+        const updatedModule = transformedModules.find(
           (m) => m.id === selectedModule?.id,
         );
         if (updatedModule) {
@@ -98,7 +101,8 @@ function ModuleDetailsContent() {
         const updatedModules = await utils.modules.getByPromo.fetch({
           promoId: selectedPromo.id,
         });
-        const updatedModule = updatedModules.find(
+        const transformedModules = updatedModules.map(transformPromoModule);
+        const updatedModule = transformedModules.find(
           (m) => m.id === selectedModule?.id,
         );
         if (updatedModule) {
@@ -115,7 +119,8 @@ function ModuleDetailsContent() {
         const updatedModules = await utils.modules.getByPromo.fetch({
           promoId: selectedPromo.id,
         });
-        const updatedModule = updatedModules.find(
+        const transformedModules = updatedModules.map(transformPromoModule);
+        const updatedModule = transformedModules.find(
           (m) => m.id === selectedModule?.id,
         );
         if (updatedModule) {
@@ -184,7 +189,8 @@ function ModuleDetailsContent() {
     }
 
     if (moduleId && modulesQuery.data && selectedPromo && !selectedModule) {
-      const foundModule = modulesQuery.data.find((m) => m.id === moduleId);
+      const transformedModules = modulesQuery.data.map(transformPromoModule);
+      const foundModule = transformedModules.find((m) => m.id === moduleId);
       if (foundModule) {
         setSelectedModule(foundModule);
       }
@@ -355,7 +361,7 @@ function ModuleDetailsContent() {
   }
 
   const promos = promosQuery.data ?? [];
-  const modules = modulesQuery.data ?? [];
+  const modules = (modulesQuery.data ?? []).map(transformPromoModule);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

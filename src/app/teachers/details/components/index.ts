@@ -6,3 +6,4 @@ export { RelationsSection } from "./RelationsSection";
 export { RelationsGrid } from "./RelationsGrid";
 export { TeacherSidebar } from "./TeacherSidebar";
 export { AssignToModuleSection } from "./AssignToModuleSection";
+export { CvManagement } from "./CvManagement";

@@ -9,6 +9,7 @@ import {
   TeacherSidebar,
   RelationsGrid,
   AssignToModuleSection,
+  CvManagement,
 } from "./components";
 import type { Teacher } from "~/types";
 import { calculateTeacherStatistics } from "./utils";
@@ -23,6 +24,8 @@ const convertApiTeacherToTeacher = (apiTeacher: unknown): Teacher => {
     email_perso: string | null;
     email_ynov: string | null;
     phone_number: string | null;
+    cv_filename: string | null;
+    cv_uploaded_at: Date | null;
   };
 
   return {
@@ -34,6 +37,8 @@ const convertApiTeacherToTeacher = (apiTeacher: unknown): Teacher => {
     email_perso: teacher.email_perso ?? undefined,
     email_ynov: teacher.email_ynov ?? undefined,
     phone_number: teacher.phone_number ?? undefined,
+    cv_filename: teacher.cv_filename ?? undefined,
+    cv_uploaded_at: teacher.cv_uploaded_at ?? undefined,
   };
 };
 
@@ -134,6 +139,10 @@ function TeacherDetailsContent() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               <div className="space-y-6">
                 <TeacherSidebar teacher={teacher} statistics={statistics} />
+                <CvManagement
+                  teacher={teacher}
+                  onCvUpdate={handleAssignmentSuccess}
+                />
                 <AssignToModuleSection
                   teacher={teacher}
                   onAssignmentSuccess={handleAssignmentSuccess}

@@ -276,4 +276,68 @@ export const teachersRouter = createTRPCRouter({
       });
     }
   }),
+
+  updateCv: publicProcedure
+    .input(
+      z.object({
+        teacherId: z.string(),
+        filename: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const teacher = await ctx.db.teacher.update({
+          where: { id: input.teacherId },
+          data: {
+            cv_filename: input.filename,
+            cv_uploaded_at: new Date(),
+          },
+        });
+        return teacher;
+      } catch (error) {
+        console.error("Error updating teacher CV:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update teacher CV",
+        });
+      }
+    }),
+
+  deleteCv: publicProcedure
+    .input(z.object({ teacherId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const teacher = await ctx.db.teacher.findUnique({
+          where: { id: input.teacherId },
+          select: { cv_filename: true },
+        });
+
+        if (!teacher?.cv_filename) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "No CV found for this teacher",
+          });
+        }
+
+        // Update database
+        await ctx.db.teacher.update({
+          where: { id: input.teacherId },
+          data: {
+            cv_filename: null,
+            cv_uploaded_at: null,
+          },
+        });
+
+        return { success: true, deletedFilename: teacher.cv_filename };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        console.error("Error deleting teacher CV:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete teacher CV",
+        });
+      }
+    }),
 });

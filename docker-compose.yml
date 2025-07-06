@@ -9,6 +9,9 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/yboard
       - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
       - NODE_ENV=production
+    volumes:
+      # Volume persistant pour stocker les CV uploadés
+      - cv_storage:/app/uploads/cv
     depends_on:
       - db
 
@@ -25,3 +28,4 @@ services:
 
 volumes:
   postgres_data:
+  cv_storage:

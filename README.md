@@ -11,6 +11,11 @@ This application enables centralized and efficient management of teachers/instru
 - **Teacher Management**: Create, modify, and delete instructor profiles
 - **Module Management**: Organize educational modules by program
 - **Program Management**: Administer different programs and specialties
+- **CV Management**: Upload, view, and manage PDF resumes for teachers
+  - 📄 **PDF Upload**: Secure upload of teacher CVs (5MB max)
+  - 👁️ **CV Viewing**: In-browser PDF preview
+  - 🔄 **CV Replacement**: Easy replacement of existing CVs
+  - 🗑️ **CV Deletion**: Option to remove uploaded CVs
 - **Relationship System**: Assign teachers to modules with 3 statuses:
   - 🟢 **Ongoing**: Currently assigned teachers
   - 🟡 **Potential**: Potential teachers (under evaluation)
@@ -80,6 +85,8 @@ erDiagram
         varchar_50 email_perso "NULL"
         varchar_50 email_ynov "NULL"
         varchar_10 phone_number "NULL"
+        varchar_255 cv_filename "NULL"
+        timestamp cv_uploaded_at "NULL"
     }
 
     PromoModules {
@@ -120,12 +127,62 @@ erDiagram
     PromoModules ||--o{ selected : "contains"
 ```
 
-### 🗂️ Project Structure
+### � File Storage & CV Management
+
+#### Uploaded files structure
+
+```
+uploads/
+└── cv/                          # CV directory
+    ├── [uuid]_[timestamp].pdf   # File naming format
+    └── ...
+```
+
+#### Storage configuration
+
+**Development:**
+
+- CVs are stored locally in `./uploads/cv/`
+- Automatic directory creation if needed
+
+**Production (Docker):**
+
+- Persistent volume `cv_storage` mounted on `/app/uploads/cv`
+- Permissions configured for `nextjs` user
+- Backup recommended via `docker cp`
+
+#### CV Management Features
+
+**Supported formats:**
+
+- ✅ PDF only
+- ✅ Maximum size: 5MB
+- ✅ Automatic naming with UUID + timestamp
+
+**Features:**
+
+- 📤 **Secure upload**: MIME type and size validation
+- 👁️ **Viewing**: Opens in new tab
+- 🔄 **Replacement**: Automatic deletion of old file
+- 🗑️ **Deletion**: File + database reference removal
+- 📊 **Metadata**: Upload date and filename stored
+
+**API Endpoints:**
+
+- `POST /api/cv/upload`: Upload new CV
+- `GET /api/cv/[filename]`: Retrieve/view CV
+- `DELETE /api/cv/[filename]`: Delete CV
+
+### �🗂️ Project Structure
 
 ```
 src/
 ├── app/                      # App Router (Next.js 13+)
-│   ├── api/trpc/            # tRPC API routes
+│   ├── api/                 # API routes
+│   │   ├── cv/              # CV management endpoints
+│   │   │   ├── upload/      # CV upload endpoint
+│   │   │   └── [filename]/  # CV view/delete endpoint
+│   │   └── trpc/            # tRPC API routes
 │   ├── login/               # Login page
 │   ├── modules/             # Module management
 │   │   ├── details/         # Module details and assignments
@@ -147,6 +204,8 @@ src/
 │   └── db.ts                # Prisma configuration
 ├── trpc/                    # tRPC client configuration
 └── types/                   # TypeScript types
+uploads/                     # File storage (not tracked in git)
+└── cv/                      # CV files storage
 ```
 
 ---
@@ -250,6 +309,26 @@ docker-compose logs -f
 
 # Stop
 docker-compose down
+
+# Stop and remove volumes (⚠️ This will delete uploaded CVs and database data)
+docker-compose down -v
+```
+
+**📁 Persistent Data Storage:**
+
+Docker Compose deployment automatically configures two persistent volumes:
+
+- `postgres_data`: PostgreSQL database data
+- `cv_storage`: Uploaded CV files (stored in `/app/uploads/cv`)
+
+**🔒 CV Backup:**
+
+```bash
+# Backup uploaded CVs
+docker cp $(docker-compose ps -q app):/app/uploads/cv ./cv_backup
+
+# Restore CVs from backup
+docker cp ./cv_backup/. $(docker-compose ps -q app):/app/uploads/cv/
 ```
 
 #### Manual Docker
@@ -258,8 +337,9 @@ docker-compose down
 # Build image
 docker build -t yboard-app .
 
-# Run
+# Run with CV storage volume
 docker run -p 3000:3000 \
+  -v yboard_cv_storage:/app/uploads/cv \
   -e DATABASE_URL="postgresql://postgres:password@host.docker.internal:5432/sourcing_intervenants_ynov" \
   -e JWT_SECRET="your-secret-key" \
   yboard-app

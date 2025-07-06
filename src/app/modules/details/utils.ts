@@ -10,6 +10,54 @@ import {
   getWorkloadStatusText as getWorkloadStatusTextFromUtils,
   getRelationStatusColor,
 } from "~/lib/utils";
+import type { Decimal } from "@prisma/client/runtime/library";
+
+// Type for raw API response with Prisma Decimal types
+type PrismaTeacherRelation = {
+  teacherId: string;
+  promoModulesId: string;
+  workload: number;
+  rate?: Decimal | null;
+  teacher: {
+    id: string;
+    lastname: string;
+    firstname: string;
+    status?: string | null;
+    diploma?: string | null;
+    comments?: string | null;
+    rate?: Decimal | null;
+    email_perso?: string | null;
+    email_ynov?: string | null;
+    phone_number?: string | null;
+    cv_filename?: string | null;
+    cv_uploaded_at?: Date | null;
+  };
+};
+
+type PrismaPotentialRelation = PrismaTeacherRelation & {
+  interview_date?: Date | null;
+  interview_comments?: string | null;
+  decision?: boolean | null;
+};
+
+export type RawPromoModule = {
+  id: string;
+  moduleId: string;
+  promoId: string;
+  workload: number;
+  promo: {
+    id: string;
+    level: string;
+    specialty: string;
+  };
+  module: {
+    id: string;
+    name: string;
+  };
+  ongoing?: PrismaTeacherRelation[];
+  potential?: PrismaPotentialRelation[];
+  selected?: PrismaTeacherRelation[];
+};
 
 export const extractNumericRate = (rate: unknown): number => {
   if (typeof rate === "number") return rate;
@@ -21,6 +69,58 @@ export const extractNumericRate = (rate: unknown): number => {
     }
   }
   return 0;
+};
+
+// Transform Prisma Decimal types to number types for frontend consumption
+export const transformPrismaRelation = (
+  relation: PrismaTeacherRelation,
+): TeacherRelation => {
+  return {
+    teacherId: relation.teacherId,
+    promoModulesId: relation.promoModulesId,
+    workload: relation.workload,
+    rate: relation.rate ? extractNumericRate(relation.rate) : null,
+    teacher: {
+      id: relation.teacher.id,
+      lastname: relation.teacher.lastname,
+      firstname: relation.teacher.firstname,
+      status: relation.teacher.status,
+      diploma: relation.teacher.diploma,
+      comments: relation.teacher.comments,
+      rate: relation.teacher.rate
+        ? extractNumericRate(relation.teacher.rate)
+        : null,
+      email_perso: relation.teacher.email_perso,
+      email_ynov: relation.teacher.email_ynov,
+      phone_number: relation.teacher.phone_number,
+    },
+  };
+};
+
+export const transformPrismaPotentialRelation = (
+  relation: PrismaPotentialRelation,
+): PotentialRelation => {
+  const base = transformPrismaRelation(relation);
+  return {
+    ...base,
+    interview_date: relation.interview_date,
+    interview_comments: relation.interview_comments,
+    decision: relation.decision,
+  };
+};
+
+export const transformPromoModule = (raw: RawPromoModule): PromoModule => {
+  return {
+    id: raw.id,
+    moduleId: raw.moduleId,
+    promoId: raw.promoId,
+    workload: raw.workload,
+    promo: raw.promo,
+    module: raw.module,
+    ongoing: raw.ongoing?.map(transformPrismaRelation),
+    potential: raw.potential?.map(transformPrismaPotentialRelation),
+    selected: raw.selected?.map(transformPrismaRelation),
+  };
 };
 
 export const calculateWorkloadStats = (module: PromoModule): WorkloadStats => {

@@ -1,3 +1,8 @@
+import type { Decimal } from "@prisma/client/runtime/library";
+
+// Type utility to convert Prisma Decimal to number
+export type DecimalToNumber<T> = T extends Decimal ? number : T;
+
 export interface User {
   id: string;
   firstname: string;
@@ -31,6 +36,8 @@ export interface Teacher {
   email_perso?: string;
   email_ynov?: string;
   phone_number?: string;
+  cv_filename?: string;
+  cv_uploaded_at?: Date;
   ongoing?: Ongoing[];
   potential?: Potential[];
   selected?: Selected[];
@@ -43,9 +50,9 @@ export interface PromoModule {
   workload: number;
   module: Module;
   promo: Promo;
-  ongoing?: Ongoing[];
-  potential?: Potential[];
-  selected?: Selected[];
+  ongoing?: TeacherRelation[];
+  potential?: TeacherRelation[];
+  selected?: TeacherRelation[];
 }
 
 export interface Ongoing {
@@ -76,6 +83,31 @@ export interface Selected {
   rate?: number;
   teacher: Teacher;
   promoModules: PromoModule;
+}
+
+// Types for Prisma results with Decimal values
+export interface TeacherRelation {
+  teacherId: string;
+  promoModulesId: string;
+  workload: number;
+  rate?: number | null;
+  interview_date?: Date | null;
+  interview_comments?: string | null;
+  decision?: boolean | null;
+  teacher: {
+    id: string;
+    lastname: string;
+    firstname: string;
+    status?: string | null;
+    diploma?: string | null;
+    comments?: string | null;
+    rate?: number | null;
+    email_perso?: string | null;
+    email_ynov?: string | null;
+    phone_number?: string | null;
+    cv_filename?: string | null;
+    cv_uploaded_at?: Date | null;
+  };
 }
 
 export interface AuthResponse {

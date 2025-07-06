@@ -1,8 +1,37 @@
 import type { PromoModule, Teacher, User } from "~/types";
+import type { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Date formatting utilities
  */
+
+/**
+ * Converts Prisma Decimal to number
+ * @param decimal - The Decimal value to convert
+ * @returns Number representation or null
+ */
+export const decimalToNumber = (decimal?: Decimal | null): number | null => {
+  if (!decimal) return null;
+  return decimal.toNumber();
+};
+
+/**
+ * Safely converts Prisma Decimal to number with fallback
+ * @param decimal - The Decimal value to convert
+ * @param fallback - Default value if conversion fails
+ * @returns Number representation or fallback
+ */
+export const safeDecimalToNumber = (
+  decimal?: Decimal | null,
+  fallback = 0,
+): number => {
+  if (!decimal) return fallback;
+  try {
+    return decimal.toNumber();
+  } catch {
+    return fallback;
+  }
+};
 
 /**
  * Formats a date to display the last connection time in French
