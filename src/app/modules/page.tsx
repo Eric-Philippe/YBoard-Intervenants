@@ -55,6 +55,9 @@ export default function ModulesPage() {
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<"name" | "workload" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -167,6 +170,19 @@ export default function ModulesPage() {
   // Event handlers
   const handlePromoSelect = (promo: Promo) => {
     setSelectedPromo(promo);
+    setSearchTerm(""); // Reset search when changing promo
+    setSortField(null); // Reset sort when changing promo
+  };
+
+  const handleSort = (field: "name" | "workload") => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new field with ascending order
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   const handleEditClick = (module: PromoModule) => {
@@ -236,14 +252,6 @@ export default function ModulesPage() {
     );
   };
 
-  // Function to calculate total workload for current selected promo modules
-  const calculateSelectedPromoTotalWorkload = (): number => {
-    return modules.reduce(
-      (total, promoModule) => total + promoModule.workload,
-      0,
-    );
-  };
-
   if (promosQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -262,6 +270,30 @@ export default function ModulesPage() {
 
   const promos = promosQuery.data ?? [];
   const modules = modulesQuery.data ?? [];
+
+  // Filter and sort modules
+  const filteredAndSortedModules = modules
+    .filter((module) =>
+      module.module.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    .sort((a, b) => {
+      if (!sortField) return 0;
+
+      let aValue: string | number;
+      let bValue: string | number;
+
+      if (sortField === "name") {
+        aValue = a.module.name.toLowerCase();
+        bValue = b.module.name.toLowerCase();
+      } else {
+        aValue = a.workload;
+        bValue = b.workload;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -346,13 +378,20 @@ export default function ModulesPage() {
                     {modules.length > 0 && (
                       <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
                         <span>
-                          <strong>{modules.length}</strong> module
-                          {modules.length > 1 ? "s" : ""}
+                          <strong>{filteredAndSortedModules.length}</strong>{" "}
+                          module
+                          {filteredAndSortedModules.length > 1 ? "s" : ""}
+                          {filteredAndSortedModules.length !== modules.length &&
+                            ` (${modules.length} au total)`}
                         </span>
                         <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
                           Total:{" "}
                           <strong className="ml-1">
-                            {calculateSelectedPromoTotalWorkload()}h
+                            {filteredAndSortedModules.reduce(
+                              (total, pm) => total + pm.workload,
+                              0,
+                            )}
+                            h
                           </strong>
                         </span>
                       </div>
@@ -368,6 +407,56 @@ export default function ModulesPage() {
                     ➕ Créer un Module
                   </button>
                 </div>
+
+                {/* Search Bar */}
+                {modules.length > 0 && (
+                  <div className="mb-4">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Rechercher un module par nom..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                      </div>
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm("")}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3"
+                        >
+                          <svg
+                            className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {modulesQuery.isLoading ? (
                   <div className="py-8 text-center">
@@ -398,16 +487,67 @@ export default function ModulesPage() {
                       ci-dessus pour créer votre premier module pour cette promo
                     </p>
                   </div>
+                ) : filteredAndSortedModules.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                      <svg
+                        className="h-6 w-6 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="mb-2 text-sm font-medium text-gray-900">
+                      Aucun module trouvé pour &quot;{searchTerm}&quot;
+                    </h3>
+                    <p className="mb-4 text-sm text-gray-500">
+                      Essayez de modifier votre recherche ou de supprimer le
+                      filtre
+                    </p>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Effacer la recherche
+                    </button>
+                  </div>
                 ) : (
                   <div className="overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                            Nom du Module
+                            <button
+                              onClick={() => handleSort("name")}
+                              className="flex items-center space-x-1 transition-colors hover:text-gray-700"
+                            >
+                              <span>Nom du Module</span>
+                              {sortField === "name" && (
+                                <span className="text-blue-500">
+                                  {sortDirection === "asc" ? "↑" : "↓"}
+                                </span>
+                              )}
+                            </button>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                            Charge de travail
+                            <button
+                              onClick={() => handleSort("workload")}
+                              className="flex items-center space-x-1 transition-colors hover:text-gray-700"
+                            >
+                              <span>Charge de travail</span>
+                              {sortField === "workload" && (
+                                <span className="text-blue-500">
+                                  {sortDirection === "asc" ? "↑" : "↓"}
+                                </span>
+                              )}
+                            </button>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                             Relations enseignants
@@ -418,7 +558,7 @@ export default function ModulesPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {modules.map((promoModule) => (
+                        {filteredAndSortedModules.map((promoModule) => (
                           <tr key={promoModule.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                               {promoModule.module.name}
