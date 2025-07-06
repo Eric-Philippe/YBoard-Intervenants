@@ -24,10 +24,17 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
           <dd className="text-2xl font-bold text-green-900">
             {stats.ongoingTotal}h
           </dd>
-          <div className="mt-1 text-xs text-green-600">
-            {stats.ongoingTotal > 0
-              ? "100% du workload passé"
-              : "Aucun historique"}
+          <div className="mt-1 space-y-1">
+            <div className="text-xs text-green-600">
+              {stats.ongoingTotal > 0
+                ? "100% du workload passé"
+                : "Aucun historique"}
+            </div>
+            {stats.ongoingCost > 0 && (
+              <div className="text-xs font-medium text-green-800">
+                💰 {stats.ongoingCost}€
+              </div>
+            )}
           </div>
         </div>
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
@@ -37,8 +44,10 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
           <dd className="text-2xl font-bold text-orange-900">
             {stats.potentialTotal}h
           </dd>
-          <div className="mt-1 text-xs text-orange-600">
-            Ne compte pas dans l&apos;allocation
+          <div className="mt-1 space-y-1">
+            <div className="text-xs text-orange-600">
+              Ne compte pas dans l&apos;allocation
+            </div>
           </div>
         </div>
         <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
@@ -48,8 +57,15 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
           <dd className="text-2xl font-bold text-purple-900">
             {stats.selectedTotal}h
           </dd>
-          <div className="mt-1 text-xs text-purple-600">
-            Base du calcul d&apos;allocation
+          <div className="mt-1 space-y-1">
+            <div className="text-xs text-purple-600">
+              Base du calcul d&apos;allocation
+            </div>
+            {stats.selectedCost > 0 && (
+              <div className="text-xs font-medium text-purple-800">
+                💰 {stats.selectedCost}€
+              </div>
+            )}
           </div>
         </div>
       </div>

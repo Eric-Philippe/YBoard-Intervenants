@@ -52,6 +52,7 @@ export interface Ongoing {
   teacherId: string;
   promoModulesId: string;
   workload: number;
+  rate?: number;
   teacher: Teacher;
   promoModules: PromoModule;
 }
@@ -60,6 +61,7 @@ export interface Potential {
   teacherId: string;
   promoModulesId: string;
   workload: number;
+  rate?: number;
   interview_date?: Date;
   interview_comments?: string;
   decision?: boolean;
@@ -71,6 +73,7 @@ export interface Selected {
   teacherId: string;
   promoModulesId: string;
   workload: number;
+  rate?: number;
   teacher: Teacher;
   promoModules: PromoModule;
 }

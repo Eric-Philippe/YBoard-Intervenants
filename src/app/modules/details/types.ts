@@ -29,10 +29,12 @@ export interface TeacherRelation {
   teacherId: string;
   promoModulesId: string;
   workload: number;
+  rate?: number | null;
   teacher: Teacher;
 }
 
 export interface PotentialRelation extends TeacherRelation {
+  rate?: number | null;
   interview_date?: Date | null;
   interview_comments?: string | null;
   decision?: boolean | null;
@@ -61,6 +63,14 @@ export interface WorkloadStats {
   totalAssigned: number;
   coverage: number;
   remaining: number;
+  // Financial information
+  ongoingCost: number;
+  potentialCost: number;
+  selectedCost: number;
+  totalSelectedCost: number;
+  averageOngoingRate: number;
+  averagePotentialRate: number;
+  averageSelectedRate: number;
 }
 
 export type TeacherStatus = "ongoing" | "potential" | "selected";

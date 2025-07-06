@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import type { TeacherRelation, TeacherStatus } from "../types";
-import { getStatusColor } from "../utils";
+import { getStatusColor, extractNumericRate } from "../utils";
 
 interface DraggableTeacherProps {
   teacher: TeacherRelation;
@@ -44,6 +44,20 @@ export function DraggableTeacher({
     }
   };
 
+  // Calculate rate and cost
+  const getEffectiveRate = () => {
+    if (teacher.rate !== null && teacher.rate !== undefined) {
+      return teacher.rate;
+    }
+    if (teacher.teacher?.rate) {
+      return extractNumericRate(teacher.teacher.rate);
+    }
+    return 0;
+  };
+
+  const effectiveRate = getEffectiveRate();
+  const totalCost = teacher.workload * effectiveRate;
+
   return (
     <tr
       ref={setNodeRef}
@@ -52,7 +66,7 @@ export function DraggableTeacher({
         isDragging ? "z-50 shadow-lg" : "hover:shadow-md"
       }`}
     >
-      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
         <div
           className="flex cursor-move items-center"
           {...attributes}
@@ -67,20 +81,45 @@ export function DraggableTeacher({
           </span>
         </div>
       </td>
-      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
         <span
           className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusColor(status)}`}
         >
           {teacher.workload}h
         </span>
       </td>
-      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+        {effectiveRate > 0 ? (
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-900">
+              {effectiveRate}€/h
+            </span>
+            {teacher.rate !== undefined && teacher.rate !== null && (
+              <span className="text-xs text-gray-400">
+                (Spécifique au module)
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="text-gray-400">N/A</span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+        {totalCost > 0 ? (
+          <span className="font-medium text-green-600">
+            {Math.round(totalCost * 100) / 100}€
+          </span>
+        ) : (
+          <span className="text-gray-400">N/A</span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
         {((teacher.workload / baseWorkload) * 100).toFixed(1)}%
       </td>
-      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
         <button
           onClick={handleDelete}
-          className="rounded-full p-1 text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          className="rounded-full p-1 text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
           title="Supprimer cette relation"
         >
           <svg

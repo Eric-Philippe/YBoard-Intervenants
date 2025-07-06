@@ -2,6 +2,21 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 
+// Schema for rate that accepts both string and number and converts to number
+const rateSchema = z
+  .union([z.string(), z.number()])
+  .transform((val) => {
+    if (typeof val === "string") {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? undefined : parsed;
+    }
+    return val;
+  })
+  .refine((val) => val === undefined || val > 0, {
+    message: "Rate must be positive",
+  })
+  .optional();
+
 export const relationsRouter = createTRPCRouter({
   // Ongoing relations
   createOngoing: publicProcedure
@@ -10,6 +25,7 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive(),
+        rate: rateSchema,
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -43,16 +59,18 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive(),
+        rate: rateSchema,
       }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { teacherId, promoModulesId, workload } = input;
+        const { teacherId, promoModulesId, workload, rate } = input;
+        const updateData = { workload, ...(rate !== undefined && { rate }) };
         const result = await ctx.db.ongoing.update({
           where: {
             teacherId_promoModulesId: { teacherId, promoModulesId },
           },
-          data: { workload },
+          data: updateData,
           include: {
             teacher: true,
             promoModules: {
@@ -107,6 +125,7 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive(),
+        rate: rateSchema,
         interview_date: z.date().optional(),
         interview_comments: z.string().optional(),
         decision: z.boolean().optional(),
@@ -143,6 +162,7 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive().optional(),
+        rate: rateSchema,
         interview_date: z.date().optional(),
         interview_comments: z.string().optional(),
         decision: z.boolean().optional(),
@@ -210,6 +230,7 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive(),
+        rate: rateSchema,
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -243,16 +264,18 @@ export const relationsRouter = createTRPCRouter({
         teacherId: z.string(),
         promoModulesId: z.string(),
         workload: z.number().int().positive(),
+        rate: rateSchema,
       }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { teacherId, promoModulesId, workload } = input;
+        const { teacherId, promoModulesId, workload, rate } = input;
+        const updateData = { workload, ...(rate !== undefined && { rate }) };
         const result = await ctx.db.selected.update({
           where: {
             teacherId_promoModulesId: { teacherId, promoModulesId },
           },
-          data: { workload },
+          data: updateData,
           include: {
             teacher: true,
             promoModules: {

@@ -237,6 +237,27 @@ function ModuleDetailsContent() {
 
     const teacher = sourceData.teacher;
 
+    // Helper function to convert rate to number
+    const normalizeRate = (rate: unknown): number | undefined => {
+      if (rate === null || rate === undefined) return undefined;
+      if (typeof rate === "number") return rate;
+      if (typeof rate === "string") {
+        const parsed = parseFloat(rate);
+        return isNaN(parsed) ? undefined : parsed;
+      }
+      // Handle Prisma Decimal
+      if (rate && typeof rate === "object" && "toNumber" in rate) {
+        try {
+          return (rate as { toNumber: () => number }).toNumber();
+        } catch {
+          return undefined;
+        }
+      }
+      return undefined;
+    };
+
+    const effectiveRate = normalizeRate(teacher.rate);
+
     try {
       // Handle duplication (from Ongoing to Potential/Selected)
       if (sourceStatus === "ongoing") {
@@ -246,12 +267,14 @@ function ModuleDetailsContent() {
             teacherId: teacher.teacherId,
             promoModulesId: selectedModule.id,
             workload: teacher.workload,
+            rate: effectiveRate,
           });
         } else if (targetStatus === "selected") {
           await createSelectedMutation.mutateAsync({
             teacherId: teacher.teacherId,
             promoModulesId: selectedModule.id,
             workload: teacher.workload,
+            rate: effectiveRate,
           });
         }
       } else {
@@ -275,12 +298,14 @@ function ModuleDetailsContent() {
             teacherId: teacher.teacherId,
             promoModulesId: selectedModule.id,
             workload: teacher.workload,
+            rate: effectiveRate,
           });
         } else if (targetStatus === "selected") {
           await createSelectedMutation.mutateAsync({
             teacherId: teacher.teacherId,
             promoModulesId: selectedModule.id,
             workload: teacher.workload,
+            rate: effectiveRate,
           });
         }
       }

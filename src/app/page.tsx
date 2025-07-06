@@ -22,6 +22,7 @@ import { api } from "~/trpc/react";
 import { useAuth } from "~/contexts/AuthContext";
 import { useModal } from "~/contexts/ModalContext";
 import { useRouter } from "next/navigation";
+import type { Decimal } from "@prisma/client/runtime/library";
 
 interface CartesianData {
   promoModule: {
@@ -47,6 +48,7 @@ interface Teacher {
   id: string;
   lastname: string;
   firstname: string;
+  rate?: Decimal | null;
 }
 
 interface CurrentRelation {
@@ -60,6 +62,12 @@ export default function MainPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+
+  // Utility function to convert Decimal to number
+  const getNumericRate = (rate: Decimal | null | undefined): number => {
+    if (!rate) return 0;
+    return typeof rate === "number" ? rate : Number(rate.toString());
+  };
 
   // Modals
   const { createUserModal, setCreateUserModal } = useModal();
@@ -104,7 +112,11 @@ export default function MainPage() {
 
   const relationForm = useForm({
     initialValues: {
-      teacherWorkloads: [] as { teacherId: string; workload: number }[],
+      teacherWorkloads: [] as {
+        teacherId: string;
+        workload: number;
+        rate?: number;
+      }[],
     },
   });
 
@@ -161,18 +173,19 @@ export default function MainPage() {
   }
 
   const handleEditRelation = async (values: {
-    teacherWorkloads: { teacherId: string; workload: number }[];
+    teacherWorkloads: { teacherId: string; workload: number; rate?: number }[];
   }) => {
     if (!currentRelation) return;
 
     try {
       const { type, promoModuleId } = currentRelation;
 
-      for (const { teacherId, workload } of values.teacherWorkloads) {
+      for (const { teacherId, workload, rate } of values.teacherWorkloads) {
         const relationData = {
           teacherId,
           promoModulesId: promoModuleId,
           workload,
+          rate,
         };
 
         switch (type) {
@@ -234,9 +247,12 @@ export default function MainPage() {
 
     if (!teacherExists) {
       const defaultWorkload = currentRelation?.moduleWorkload ?? 1;
+      const teacher = teachers.find((t) => t.id === teacherId);
+      const defaultRate = getNumericRate(teacher?.rate);
+
       relationForm.setFieldValue("teacherWorkloads", [
         ...currentWorkloads,
-        { teacherId, workload: defaultWorkload },
+        { teacherId, workload: defaultWorkload, rate: defaultRate },
       ]);
     }
   };
@@ -255,6 +271,16 @@ export default function MainPage() {
       "teacherWorkloads",
       currentWorkloads.map((tw) =>
         tw.teacherId === teacherId ? { ...tw, workload } : tw,
+      ),
+    );
+  };
+
+  const updateTeacherRate = (teacherId: string, rate: number) => {
+    const currentWorkloads = relationForm.values.teacherWorkloads;
+    relationForm.setFieldValue(
+      "teacherWorkloads",
+      currentWorkloads.map((tw) =>
+        tw.teacherId === teacherId ? { ...tw, rate } : tw,
       ),
     );
   };
@@ -471,11 +497,11 @@ export default function MainPage() {
             />
           </div>
 
-          {/* Selected Teachers with Individual Workloads */}
+          {/* Selected Teachers with Individual Workloads and Rates */}
           {relationForm.values.teacherWorkloads.length > 0 && (
             <div className="mb-6">
               <label className="mb-3 block text-sm font-medium text-gray-700">
-                Teachers and their Workloads
+                Teachers, their Workloads and Hourly Rates
               </label>
               <div className="space-y-3">
                 {relationForm.values.teacherWorkloads.map(
@@ -483,6 +509,8 @@ export default function MainPage() {
                     const teacher = teachers.find(
                       (t) => t.id === teacherWorkload.teacherId,
                     );
+                    const teacherDefaultRate = getNumericRate(teacher?.rate);
+
                     return (
                       <div
                         key={teacherWorkload.teacherId}
@@ -492,8 +520,14 @@ export default function MainPage() {
                           <Text size="sm" fw={500}>
                             {teacher?.lastname} {teacher?.firstname}
                           </Text>
+                          <Text size="xs" c="dimmed">
+                            Default rate: {teacherDefaultRate}€/h
+                          </Text>
                         </div>
                         <div className="w-32">
+                          <label className="mb-1 block text-xs text-gray-600">
+                            Hours
+                          </label>
                           <NumberInput
                             placeholder="Hours"
                             min={1}
@@ -501,6 +535,26 @@ export default function MainPage() {
                             onChange={(value) => {
                               if (typeof value === "number") {
                                 updateTeacherWorkload(
+                                  teacherWorkload.teacherId,
+                                  value,
+                                );
+                              }
+                            }}
+                            size="sm"
+                          />
+                        </div>
+                        <div className="w-32">
+                          <label className="mb-1 block text-xs text-gray-600">
+                            Rate (€/h)
+                          </label>
+                          <NumberInput
+                            placeholder="Rate"
+                            min={0}
+                            step={0.01}
+                            value={teacherWorkload.rate ?? teacherDefaultRate}
+                            onChange={(value) => {
+                              if (typeof value === "number") {
+                                updateTeacherRate(
                                   teacherWorkload.teacherId,
                                   value,
                                 );

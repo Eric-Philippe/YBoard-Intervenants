@@ -11,7 +11,7 @@ export function SummaryReport({ selectedModule, stats }: SummaryReportProps) {
       <h3 className="mb-4 text-lg font-medium text-gray-900">
         📋 Rapport de Synthèse
       </h3>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div>
           <h4 className="mb-2 font-medium text-gray-800">
             Allocation des Ressources
@@ -54,6 +54,32 @@ export function SummaryReport({ selectedModule, stats }: SummaryReportProps) {
               {selectedModule.selected?.length ?? 0} enseignant
               {(selectedModule.selected?.length ?? 0) > 1 ? "s" : ""}) -{" "}
               <em className="text-purple-600">Allocation effective</em>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="mb-2 font-medium text-gray-800">
+            💰 Informations Financières
+          </h4>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>
+              • Coût Ongoing: <strong>{stats.ongoingCost}€</strong>
+              {stats.averageOngoingRate > 0 && (
+                <span className="text-xs text-gray-500">
+                  {" "}
+                  (Moy: {stats.averageOngoingRate}€/h)
+                </span>
+              )}
+            </li>
+            <li>
+              • Coût Selected:{" "}
+              <strong className="text-green-600">{stats.selectedCost}€</strong>
+              {stats.averageSelectedRate > 0 && (
+                <span className="text-xs text-gray-500">
+                  {" "}
+                  (Moy: {stats.averageSelectedRate}€/h)
+                </span>
+              )}
             </li>
           </ul>
         </div>

@@ -14,6 +14,7 @@ export interface TeacherStatistics {
   ongoingWorkload: number;
   potentialWorkload: number;
   selectedWorkload: number;
+  selectedCost: number;
 }
 
 export type RelationType = "ongoing" | "potential" | "selected";

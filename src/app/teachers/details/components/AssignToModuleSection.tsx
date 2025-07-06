@@ -43,7 +43,18 @@ export function AssignToModuleSection({
     null,
   );
   const [workload, setWorkload] = useState<number | "">(1);
+  const [rate, setRate] = useState<number | "">(""); // Add rate state
   const [isAssigning, setIsAssigning] = useState(false);
+
+  // Utility function to convert rate to number (similar to main page)
+  const getNumericRate = (
+    rateValue: number | string | null | undefined,
+  ): number => {
+    if (!rateValue) return teacher.rate ?? 0;
+    return typeof rateValue === "number"
+      ? rateValue
+      : Number(rateValue.toString());
+  };
 
   // tRPC hooks
   const utils = api.useUtils();
@@ -71,6 +82,10 @@ export function AssignToModuleSection({
 
   const handleStatusSelect = (status: RelationType) => {
     setSelectedStatus(status);
+    // Set default rate from teacher when status is selected
+    if (teacher.rate) {
+      setRate(teacher.rate);
+    }
   };
 
   const handleAssign = async () => {
@@ -89,10 +104,12 @@ export function AssignToModuleSection({
     setIsAssigning(true);
 
     try {
+      const finalRate = getNumericRate(rate);
       const assignmentData = {
         teacherId: teacher.id,
         promoModulesId: selectedModule.id,
         workload: workload,
+        rate: finalRate > 0 ? finalRate : undefined,
       };
 
       switch (selectedStatus) {
@@ -115,6 +132,7 @@ export function AssignToModuleSection({
       setSelectedModule(null);
       setSelectedStatus(null);
       setWorkload("");
+      setRate("");
 
       onAssignmentSuccess();
       alert("Enseignant assigné avec succès!");
@@ -292,6 +310,53 @@ export function AssignToModuleSection({
           </div>
         )}
 
+        {/* Rate Input */}
+        {selectedStatus && (
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              5. Taux horaire (€/h)
+            </label>
+            <NumberInput
+              min={0}
+              step={0.01}
+              value={rate}
+              onChange={(value) => {
+                if (value === "" || value === undefined || value === null) {
+                  setRate("");
+                } else if (typeof value === "number") {
+                  setRate(value);
+                } else {
+                  // Si c'est une string, on essaie de la convertir en number
+                  const numValue = Number(value);
+                  if (!isNaN(numValue)) {
+                    setRate(numValue);
+                  } else {
+                    setRate("");
+                  }
+                }
+              }}
+              placeholder={`Taux par défaut: ${teacher.rate ?? 0}€/h`}
+              className="w-full"
+              styles={{
+                input: {
+                  borderColor: "#d1d5db",
+                  backgroundColor: "white",
+                  fontSize: "14px",
+                  "&:focus": {
+                    borderColor: "#3b82f6",
+                    boxShadow: "0 0 0 1px #3b82f6",
+                  },
+                },
+              }}
+            />
+            <div className="mt-1 text-xs text-gray-500">
+              {teacher.rate
+                ? `Le taux par défaut de l'enseignant est ${teacher.rate}€/h. Laissez vide pour utiliser cette valeur.`
+                : "Aucun taux par défaut défini pour cet enseignant."}
+            </div>
+          </div>
+        )}
+
         {/* Assignment Summary */}
         {selectedPromo && selectedModule && selectedStatus && (
           <div className="rounded-md bg-gray-50 p-4">
@@ -323,6 +388,14 @@ export function AssignToModuleSection({
               <div>
                 <strong>Charge de travail:</strong>{" "}
                 {typeof workload === "number" ? `${workload}h` : "À définir"}
+              </div>
+              <div>
+                <strong>Taux horaire:</strong>{" "}
+                {rate && typeof rate === "number"
+                  ? `${rate}€/h`
+                  : teacher.rate
+                    ? `${teacher.rate}€/h (par défaut)`
+                    : "Non défini"}
               </div>
             </div>
           </div>

@@ -24,9 +24,19 @@ export function StatisticsCard({ statistics }: StatisticsCardProps) {
             Charge de travail totale
           </dt>
           <dd className="mt-1 text-2xl font-bold text-blue-600">
-            {statistics.totalWorkload}h
+            {statistics.selectedWorkload}h
           </dd>
         </div>
+        {statistics.selectedCost > 0 && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500">
+              Coût total estimé (Selected)
+            </dt>
+            <dd className="mt-1 text-2xl font-bold text-green-600">
+              {statistics.selectedCost.toFixed(2)}€
+            </dd>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-4 pt-4 text-center">
           <div>
             <dt className="text-xs font-medium text-green-600">Ongoing</dt>

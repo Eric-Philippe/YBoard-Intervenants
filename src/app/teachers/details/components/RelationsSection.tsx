@@ -1,5 +1,5 @@
 import type { RelationSection } from "../types";
-import { getTotalWorkload } from "../utils";
+import { getTotalWorkload, getTotalAmount } from "../utils";
 import { RelationCard } from "./RelationCard";
 
 interface RelationsSectionProps {
@@ -8,6 +8,7 @@ interface RelationsSectionProps {
 
 export function RelationsSection({ section }: RelationsSectionProps) {
   const { type, title, emoji, relations, colorScheme } = section;
+  const totalAmount = getTotalAmount(relations);
 
   return (
     <div
@@ -28,11 +29,16 @@ export function RelationsSection({ section }: RelationsSectionProps) {
               colorScheme={colorScheme}
             />
           ))}
-          <div className="mt-4 text-right">
-            <span className={`text-sm font-medium ${colorScheme.totalText}`}>
+          <div className="mt-4 space-y-1 text-right">
+            <div className={`text-sm font-medium ${colorScheme.totalText}`}>
               Total {type.charAt(0).toUpperCase() + type.slice(1)}:{" "}
               {getTotalWorkload(relations)}h
-            </span>
+            </div>
+            {totalAmount > 0 && (
+              <div className={`text-sm font-medium ${colorScheme.totalText}`}>
+                Montant total: {totalAmount.toFixed(2)}€
+              </div>
+            )}
           </div>
         </div>
       ) : (

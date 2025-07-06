@@ -561,7 +561,16 @@ export default function ModulesPage() {
                         {filteredAndSortedModules.map((promoModule) => (
                           <tr key={promoModule.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                              {promoModule.module.name}
+                              <button
+                                onClick={() => {
+                                  router.push(
+                                    `/modules/details?promoId=${promoModule.promo.id}&moduleId=${promoModule.id}`,
+                                  );
+                                }}
+                                className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
+                              >
+                                🔍 {promoModule.module.name}
+                              </button>
                             </td>
                             <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                               <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">

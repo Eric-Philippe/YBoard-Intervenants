@@ -12,7 +12,7 @@ export function ModuleDetailsHeader({
 }: ModuleDetailsHeaderProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div>
           <h3 className="text-lg font-medium text-gray-900">
             Informations Générales
@@ -94,6 +94,32 @@ export function ModuleDetailsHeader({
                 >
                   {getWorkloadStatusText(stats.coverage)}
                 </span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">
+            💰 Informations Financières
+          </h3>
+          <dl className="mt-3 space-y-2">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">
+                Coût Selected
+              </dt>
+              <dd className="text-lg font-semibold text-green-600">
+                {stats.totalSelectedCost}€
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">
+                Taux moyen Selected
+              </dt>
+              <dd className="text-sm font-medium text-gray-900">
+                {stats.averageSelectedRate > 0
+                  ? `${stats.averageSelectedRate}€/h`
+                  : "N/A"}
               </dd>
             </div>
           </dl>

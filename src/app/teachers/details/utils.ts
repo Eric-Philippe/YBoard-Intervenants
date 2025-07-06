@@ -26,12 +26,27 @@ export const formatTeacherName = getTeacherFullName;
  * Format rate display
  */
 export const formatRate = formatRateFromUtils;
+/**
+ * Calculate total amount for a list of relations
+ */
+export const getTotalAmount = (
+  relations: Array<{ workload: number; rate?: number }>,
+): number => {
+  return relations.reduce((total, relation) => {
+    if (relation.rate) {
+      return total + relation.workload * relation.rate;
+    }
+    return total;
+  }, 0);
+};
+
 export const calculateTeacherStatistics = (
   teacher: Teacher,
 ): TeacherStatistics => {
   const ongoingWorkload = getTotalWorkload(teacher.ongoing);
   const potentialWorkload = getTotalWorkload(teacher.potential);
   const selectedWorkload = getTotalWorkload(teacher.selected);
+  const selectedCost = getTotalAmount(teacher.selected ?? []);
 
   return {
     totalRelations:
@@ -42,6 +57,7 @@ export const calculateTeacherStatistics = (
     ongoingWorkload,
     potentialWorkload,
     selectedWorkload,
+    selectedCost,
   };
 };
 
