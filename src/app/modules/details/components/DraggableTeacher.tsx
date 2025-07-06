@@ -46,10 +46,12 @@ export function DraggableTeacher({
 
   // Calculate rate and cost
   const getEffectiveRate = () => {
+    // First check if there's a specific rate for this relation
     if (teacher.rate !== null && teacher.rate !== undefined) {
-      return teacher.rate;
+      return Number(teacher.rate);
     }
-    if (teacher.teacher?.rate) {
+    // Fallback to teacher's default rate
+    if (teacher.teacher?.rate !== null && teacher.teacher?.rate !== undefined) {
       return extractNumericRate(teacher.teacher.rate);
     }
     return 0;

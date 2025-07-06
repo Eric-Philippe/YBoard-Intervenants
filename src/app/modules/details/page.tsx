@@ -243,26 +243,37 @@ function ModuleDetailsContent() {
 
     const teacher = sourceData.teacher;
 
-    // Helper function to convert rate to number
-    const normalizeRate = (rate: unknown): number | undefined => {
-      if (rate === null || rate === undefined) return undefined;
-      if (typeof rate === "number") return rate;
-      if (typeof rate === "string") {
-        const parsed = parseFloat(rate);
-        return isNaN(parsed) ? undefined : parsed;
+    // Helper function to get the effective rate from a teacher relation
+    const getEffectiveRate = (teacherRelation: TeacherRelation): number => {
+      // First check if there's a specific rate for this relation
+      if (teacherRelation.rate !== null && teacherRelation.rate !== undefined) {
+        return Number(teacherRelation.rate);
       }
-      // Handle Prisma Decimal
-      if (rate && typeof rate === "object" && "toNumber" in rate) {
-        try {
-          return (rate as { toNumber: () => number }).toNumber();
-        } catch {
-          return undefined;
+      // Fallback to teacher's default rate
+      if (
+        teacherRelation.teacher?.rate !== null &&
+        teacherRelation.teacher?.rate !== undefined
+      ) {
+        // Handle Prisma Decimal type
+        const rate = teacherRelation.teacher.rate;
+        if (typeof rate === "number") return rate;
+        if (typeof rate === "string") {
+          const parsed = parseFloat(rate);
+          return isNaN(parsed) ? 1 : parsed;
+        }
+        if (rate && typeof rate === "object" && "toNumber" in rate) {
+          try {
+            return (rate as { toNumber: () => number }).toNumber();
+          } catch {
+            return 1;
+          }
         }
       }
-      return undefined;
+      return 1; // Default fallback rate
     };
 
-    const effectiveRate = normalizeRate(teacher.rate);
+    // Use the teacher's actual rate from the relation
+    const effectiveRate = getEffectiveRate(teacher);
 
     try {
       // Handle duplication (from Ongoing to Potential/Selected)

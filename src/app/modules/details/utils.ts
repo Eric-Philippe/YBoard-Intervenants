@@ -60,10 +60,25 @@ export type RawPromoModule = {
 };
 
 export const extractNumericRate = (rate: unknown): number => {
+  if (rate === null || rate === undefined) return 0;
   if (typeof rate === "number") return rate;
+  if (typeof rate === "string") {
+    const parsed = parseFloat(rate);
+    return isNaN(parsed) ? 0 : parsed;
+  }
   if (rate && typeof rate === "object" && "toNumber" in rate) {
     try {
       return (rate as { toNumber: () => number }).toNumber();
+    } catch {
+      return 0;
+    }
+  }
+  // Handle cases where rate might be a Decimal object with toString()
+  if (rate && typeof rate === "object" && "toString" in rate) {
+    try {
+      const stringValue = (rate as { toString: () => string }).toString();
+      const parsed = parseFloat(stringValue);
+      return isNaN(parsed) ? 0 : parsed;
     } catch {
       return 0;
     }
