@@ -11,6 +11,13 @@ interface Promo {
   id: string;
   level: string;
   specialty: string;
+  promoModules?: Array<{
+    workload: number;
+    module: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 interface PromoModule {
@@ -219,6 +226,24 @@ export default function ModulesPage() {
     return ongoing + potential + selected;
   };
 
+  // Function to calculate total workload for a promo
+  const calculatePromoTotalWorkload = (promo: Promo): number => {
+    return (
+      promo.promoModules?.reduce(
+        (total, promoModule) => total + promoModule.workload,
+        0,
+      ) ?? 0
+    );
+  };
+
+  // Function to calculate total workload for current selected promo modules
+  const calculateSelectedPromoTotalWorkload = (): number => {
+    return modules.reduce(
+      (total, promoModule) => total + promoModule.workload,
+      0,
+    );
+  };
+
   if (promosQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -269,24 +294,43 @@ export default function ModulesPage() {
                 📋 Sélectionnez une Promo
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {promos.map((promo) => (
-                  <button
-                    key={promo.id}
-                    onClick={() => handlePromoSelect(promo)}
-                    className={`rounded-lg border-2 p-4 text-left transition-all ${
-                      selectedPromo?.id === promo.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="font-semibold text-gray-900">
-                      {promo.level} - {promo.specialty}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Cliquez pour voir les modules
-                    </div>
-                  </button>
-                ))}
+                {promos.map((promo) => {
+                  const totalWorkload = calculatePromoTotalWorkload(promo);
+                  const moduleCount = promo.promoModules?.length ?? 0;
+
+                  return (
+                    <button
+                      key={promo.id}
+                      onClick={() => handlePromoSelect(promo)}
+                      className={`rounded-lg border-2 p-4 text-left transition-all ${
+                        selectedPromo?.id === promo.id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="font-semibold text-gray-900">
+                        {promo.level} - {promo.specialty}
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Modules:</span>
+                          <span className="font-medium text-gray-800">
+                            {moduleCount}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Total heures:</span>
+                          <span className="font-semibold text-blue-600">
+                            {totalWorkload}h
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Cliquez pour voir les modules
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -294,10 +338,26 @@ export default function ModulesPage() {
             {selectedPromo && (
               <div>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    📖 Modules de {selectedPromo.level} -{" "}
-                    {selectedPromo.specialty}
-                  </h2>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      📖 Modules de {selectedPromo.level} -{" "}
+                      {selectedPromo.specialty}
+                    </h2>
+                    {modules.length > 0 && (
+                      <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
+                        <span>
+                          <strong>{modules.length}</strong> module
+                          {modules.length > 1 ? "s" : ""}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                          Total:{" "}
+                          <strong className="ml-1">
+                            {calculateSelectedPromoTotalWorkload()}h
+                          </strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => {
                       createForm.setFieldValue("promoId", selectedPromo.id);

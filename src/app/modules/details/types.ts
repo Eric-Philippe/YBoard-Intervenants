@@ -16,6 +16,13 @@ export interface Promo {
   id: string;
   level: string;
   specialty: string;
+  promoModules?: Array<{
+    workload: number;
+    module: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 export interface TeacherRelation {
