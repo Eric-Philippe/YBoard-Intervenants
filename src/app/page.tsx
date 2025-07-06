@@ -52,6 +52,7 @@ interface Teacher {
 interface CurrentRelation {
   type: "ongoing" | "potential" | "selected";
   promoModuleId: string;
+  moduleWorkload: number;
 }
 
 export default function MainPage() {
@@ -219,8 +220,9 @@ export default function MainPage() {
   const openRelationModal = (
     type: "ongoing" | "potential" | "selected",
     promoModuleId: string,
+    moduleWorkload: number,
   ) => {
-    setCurrentRelation({ type, promoModuleId });
+    setCurrentRelation({ type, promoModuleId, moduleWorkload });
     setEditRelationModal(true);
   };
 
@@ -231,9 +233,10 @@ export default function MainPage() {
     );
 
     if (!teacherExists) {
+      const defaultWorkload = currentRelation?.moduleWorkload ?? 1;
       relationForm.setFieldValue("teacherWorkloads", [
         ...currentWorkloads,
-        { teacherId, workload: 1 },
+        { teacherId, workload: defaultWorkload },
       ]);
     }
   };
@@ -385,7 +388,11 @@ export default function MainPage() {
                           variant="light"
                           color="green"
                           onClick={() =>
-                            openRelationModal("ongoing", item.promoModule.id)
+                            openRelationModal(
+                              "ongoing",
+                              item.promoModule.id,
+                              item.promoModule.workload,
+                            )
                           }
                         >
                           + Ongoing
@@ -395,7 +402,11 @@ export default function MainPage() {
                           variant="light"
                           color="orange"
                           onClick={() =>
-                            openRelationModal("potential", item.promoModule.id)
+                            openRelationModal(
+                              "potential",
+                              item.promoModule.id,
+                              item.promoModule.workload,
+                            )
                           }
                         >
                           + Potential
@@ -405,7 +416,11 @@ export default function MainPage() {
                           variant="light"
                           color="blue"
                           onClick={() =>
-                            openRelationModal("selected", item.promoModule.id)
+                            openRelationModal(
+                              "selected",
+                              item.promoModule.id,
+                              item.promoModule.workload,
+                            )
                           }
                         >
                           + Selected
