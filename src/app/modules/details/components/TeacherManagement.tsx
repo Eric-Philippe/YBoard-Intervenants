@@ -97,7 +97,7 @@ export function TeacherManagement({
           count={selectedModule.ongoing?.length ?? 0}
         >
           {selectedModule.ongoing && selectedModule.ongoing.length > 0 ? (
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -150,7 +150,7 @@ export function TeacherManagement({
           count={selectedModule.potential?.length ?? 0}
         >
           {selectedModule.potential && selectedModule.potential.length > 0 ? (
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -203,7 +203,7 @@ export function TeacherManagement({
           count={selectedModule.selected?.length ?? 0}
         >
           {selectedModule.selected && selectedModule.selected.length > 0 ? (
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>

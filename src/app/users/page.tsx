@@ -264,20 +264,20 @@ export default function UsersPage() {
                 </button>
               </div>
             ) : (
-              <div className="overflow-hidden">
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Utilisateur
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Email
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Dernière Connexion
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Actions
                       </th>
                     </tr>
@@ -285,7 +285,7 @@ export default function UsersPage() {
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {users.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                               <span className="text-sm font-medium text-blue-700">
@@ -300,12 +300,12 @@ export default function UsersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                           <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
                             {user.email}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               user.last_connected
@@ -316,7 +316,7 @@ export default function UsersPage() {
                             {formatLastConnected(user.last_connected)}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                        <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleEditClick(user)}
@@ -347,7 +347,7 @@ export default function UsersPage() {
 
       {/* Create User Modal */}
       {createModal && (
-        <div className="fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600 bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-[500px] rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">
@@ -499,7 +499,7 @@ export default function UsersPage() {
 
       {/* Edit User Modal */}
       {editModal && selectedUser && (
-        <div className="fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600 bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-[500px] rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">

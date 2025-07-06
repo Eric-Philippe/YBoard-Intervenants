@@ -285,20 +285,20 @@ export default function DeleteUsersPage() {
                   )}
                 </div>
 
-                <div className="overflow-hidden">
+                <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           <span className="sr-only">Sélection</span>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           Utilisateur
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           Email
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                           Dernière Connexion
                         </th>
                       </tr>
@@ -311,7 +311,7 @@ export default function DeleteUsersPage() {
                             selectedUserIds.has(user.id) ? "bg-red-50" : ""
                           }`}
                         >
-                          <td className="whitespace-nowrap px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <input
                               type="checkbox"
                               checked={selectedUserIds.has(user.id)}
@@ -319,7 +319,7 @@ export default function DeleteUsersPage() {
                               className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                             />
                           </td>
-                          <td className="whitespace-nowrap px-6 py-4">
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                                 <span className="text-sm font-medium text-blue-700">
@@ -334,12 +334,12 @@ export default function DeleteUsersPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                             <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
                               {user.email}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                             <span
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                 user.last_connected
@@ -363,7 +363,7 @@ export default function DeleteUsersPage() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600 bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-[500px] rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">

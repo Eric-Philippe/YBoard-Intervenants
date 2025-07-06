@@ -62,6 +62,35 @@ export default function MainPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [expandedPromos, setExpandedPromos] = useState<Set<string>>(new Set());
+  const [selectedPromos, setSelectedPromos] = useState<Set<string>>(new Set());
+  const [promoSelectorOpen, setPromoSelectorOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Clé pour le localStorage
+  const STORAGE_KEY = "yboard-selected-promos";
+
+  // Fonctions utilitaires pour le localStorage
+  const loadSelectedPromos = (): Set<string> => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as string[];
+          return new Set(parsed);
+        } catch {
+          return new Set();
+        }
+      }
+    }
+    return new Set();
+  };
+
+  const saveSelectedPromos = (promos: Set<string>) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(promos)));
+    }
+  };
 
   // Utility function to convert Decimal to number
   const getNumericRate = (rate: Decimal | null | undefined): number => {
@@ -151,7 +180,33 @@ export default function MainPage() {
   }, [isAuthenticated, authLoading, router]);
 
   useEffect(() => {
-    if (cartesianQuery.data) setCartesianData(cartesianQuery.data);
+    if (cartesianQuery.data) {
+      setCartesianData(cartesianQuery.data);
+
+      if (!isInitialized && cartesianQuery.data.length > 0) {
+        const groupedData = groupByPromo(cartesianQuery.data);
+        const allPromoNames = Object.keys(groupedData);
+
+        // Charger les promos sélectionnées depuis localStorage
+        const storedSelectedPromos = loadSelectedPromos();
+
+        // Si aucune promo stockée, sélectionner toutes par défaut
+        const initialSelectedPromos =
+          storedSelectedPromos.size > 0
+            ? storedSelectedPromos
+            : new Set(allPromoNames);
+
+        setSelectedPromos(initialSelectedPromos);
+
+        // Ouvrir la première promo sélectionnée par défaut
+        const firstSelectedPromo = Array.from(initialSelectedPromos)[0];
+        if (firstSelectedPromo) {
+          setExpandedPromos(new Set([firstSelectedPromo]));
+        }
+
+        setIsInitialized(true);
+      }
+    }
     if (teachersQuery.data) setTeachers(teachersQuery.data);
 
     setLoading(
@@ -166,6 +221,7 @@ export default function MainPage() {
     cartesianQuery.isLoading,
     teachersQuery.isLoading,
     promosQuery.isLoading,
+    isInitialized,
   ]);
 
   if (authLoading || !isAuthenticated) {
@@ -305,6 +361,52 @@ export default function MainPage() {
 
   const groupedData = groupByPromo(cartesianData);
 
+  const togglePromoExpansion = (promoName: string) => {
+    const newExpanded = new Set(expandedPromos);
+    if (newExpanded.has(promoName)) {
+      newExpanded.delete(promoName);
+    } else {
+      newExpanded.add(promoName);
+    }
+    setExpandedPromos(newExpanded);
+  };
+
+  const isPromoExpanded = (promoName: string) => {
+    return expandedPromos.has(promoName);
+  };
+
+  const isPromoSelected = (promoName: string) => {
+    return selectedPromos.has(promoName);
+  };
+
+  const togglePromoSelection = (promoName: string, isSelected: boolean) => {
+    const newSelected = new Set(selectedPromos);
+    if (isSelected) {
+      newSelected.add(promoName);
+    } else {
+      newSelected.delete(promoName);
+      // Si la promo était dépliée, la replier aussi
+      const newExpanded = new Set(expandedPromos);
+      newExpanded.delete(promoName);
+      setExpandedPromos(newExpanded);
+    }
+    setSelectedPromos(newSelected);
+    saveSelectedPromos(newSelected);
+  };
+
+  const selectAllPromos = () => {
+    const allPromoNames = Object.keys(groupedData);
+    const newSelected = new Set(allPromoNames);
+    setSelectedPromos(newSelected);
+    saveSelectedPromos(newSelected);
+  };
+
+  const deselectAllPromos = () => {
+    setSelectedPromos(new Set());
+    setExpandedPromos(new Set());
+    saveSelectedPromos(new Set());
+  };
+
   return (
     <Container size="xl" className="py-8">
       <LoadingOverlay visible={loading} />
@@ -313,6 +415,27 @@ export default function MainPage() {
         <Title order={1} className="text-gray-900">
           YBoard - Intervenants - Main Page
         </Title>
+        <Button
+          leftSection={
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          }
+          variant="light"
+          onClick={() => setPromoSelectorOpen(true)}
+        >
+          Sélectionner les promos
+        </Button>
       </div>
 
       {error && (
@@ -351,114 +474,183 @@ export default function MainPage() {
           </div>
         )}
 
-        {Object.entries(groupedData).map(([promoName, items]) => (
-          <Paper key={promoName} shadow="sm" p="md">
-            <Title order={3} className="mb-4 border-b pb-2 text-blue-800">
-              {promoName}
-            </Title>
+        {Object.entries(groupedData).filter(([promoName]) =>
+          isPromoSelected(promoName),
+        ).length === 0 && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center">
+            <div className="flex flex-col items-center">
+              <svg
+                className="mb-4 h-12 w-12 text-yellow-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <h3 className="mb-2 text-lg font-medium text-yellow-800">
+                Aucune promo sélectionnée
+              </h3>
+              <p className="mb-4 text-yellow-700">
+                Cliquez sur le bouton &quot;Sélectionner les promos&quot; pour
+                choisir quelles promos afficher.
+              </p>
+              <Button
+                onClick={() => setPromoSelectorOpen(true)}
+                variant="light"
+                color="yellow"
+              >
+                Sélectionner des promos
+              </Button>
+            </div>
+          </div>
+        )}
 
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Module</Table.Th>
-                  <Table.Th>Workload</Table.Th>
-                  <Table.Th>Ongoing Teachers</Table.Th>
-                  <Table.Th>Potential Teachers</Table.Th>
-                  <Table.Th>Selected Teachers</Table.Th>
-                  <Table.Th>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {items.map((item) => (
-                  <Table.Tr key={item.promoModule.id}>
-                    <Table.Td>
-                      <button
-                        onClick={() => {
-                          router.push(
-                            `/modules/details?promoId=${item.promoModule.promo.id}&moduleId=${item.promoModule.id}`,
-                          );
-                        }}
-                        className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
-                      >
-                        🔍 {item.promoModule.module.name}
-                      </button>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge color="blue">{item.promoModule.workload}h</Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">
-                        {item.ongoing.length > 0
-                          ? getTeacherNames(item.ongoing)
-                          : "None"}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">
-                        {item.potential.length > 0
-                          ? getTeacherNames(item.potential)
-                          : "None"}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">
-                        {item.selected.length > 0
-                          ? getTeacherNames(item.selected)
-                          : "None"}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <Button
-                          size="xs"
-                          variant="light"
-                          color="green"
-                          onClick={() =>
-                            openRelationModal(
-                              "ongoing",
-                              item.promoModule.id,
-                              item.promoModule.workload,
-                            )
-                          }
-                        >
-                          + Ongoing
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="light"
-                          color="orange"
-                          onClick={() =>
-                            openRelationModal(
-                              "potential",
-                              item.promoModule.id,
-                              item.promoModule.workload,
-                            )
-                          }
-                        >
-                          + Potential
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="light"
-                          color="blue"
-                          onClick={() =>
-                            openRelationModal(
-                              "selected",
-                              item.promoModule.id,
-                              item.promoModule.workload,
-                            )
-                          }
-                        >
-                          + Selected
-                        </Button>
-                      </Group>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Paper>
-        ))}
+        {Object.entries(groupedData)
+          .filter(([promoName]) => isPromoSelected(promoName))
+          .map(([promoName, items]) => (
+            <Paper key={promoName} shadow="sm" p="md">
+              <div
+                className="mb-4 flex cursor-pointer items-center justify-between border-b pb-2"
+                onClick={() => togglePromoExpansion(promoName)}
+              >
+                <Title order={3} className="text-blue-800">
+                  {promoName}
+                </Title>
+                <div className="flex items-center gap-2">
+                  <Badge color="gray" size="sm">
+                    {items.length} module{items.length > 1 ? "s" : ""}
+                  </Badge>
+                  <svg
+                    className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${
+                      isPromoExpanded(promoName) ? "rotate-90" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {isPromoExpanded(promoName) && (
+                <div className="overflow-x-auto">
+                  <Table striped highlightOnHover>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Module</Table.Th>
+                        <Table.Th>Workload</Table.Th>
+                        <Table.Th>Ongoing Teachers</Table.Th>
+                        <Table.Th>Potential Teachers</Table.Th>
+                        <Table.Th>Selected Teachers</Table.Th>
+                        <Table.Th>Actions</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {items.map((item) => (
+                        <Table.Tr key={item.promoModule.id}>
+                          <Table.Td>
+                            <button
+                              onClick={() => {
+                                router.push(
+                                  `/modules/details?promoId=${item.promoModule.promo.id}&moduleId=${item.promoModule.id}`,
+                                );
+                              }}
+                              className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
+                            >
+                              🔍 {item.promoModule.module.name}
+                            </button>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge color="blue">
+                              {item.promoModule.workload}h
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm">
+                              {item.ongoing.length > 0
+                                ? getTeacherNames(item.ongoing)
+                                : "None"}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm">
+                              {item.potential.length > 0
+                                ? getTeacherNames(item.potential)
+                                : "None"}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm">
+                              {item.selected.length > 0
+                                ? getTeacherNames(item.selected)
+                                : "None"}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Group gap="xs">
+                              <Button
+                                size="xs"
+                                variant="light"
+                                color="green"
+                                onClick={() =>
+                                  openRelationModal(
+                                    "ongoing",
+                                    item.promoModule.id,
+                                    item.promoModule.workload,
+                                  )
+                                }
+                              >
+                                + Ongoing
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="light"
+                                color="orange"
+                                onClick={() =>
+                                  openRelationModal(
+                                    "potential",
+                                    item.promoModule.id,
+                                    item.promoModule.workload,
+                                  )
+                                }
+                              >
+                                + Potential
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="light"
+                                color="blue"
+                                onClick={() =>
+                                  openRelationModal(
+                                    "selected",
+                                    item.promoModule.id,
+                                    item.promoModule.workload,
+                                  )
+                                }
+                              >
+                                + Selected
+                              </Button>
+                            </Group>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </div>
+              )}
+            </Paper>
+          ))}
       </div>
 
       {/* Edit Relation Modal */}
@@ -650,6 +842,69 @@ export default function MainPage() {
             </Button>
           </Group>
         </form>
+      </Modal>
+
+      {/* Promo Selection Modal */}
+      <Modal
+        opened={promoSelectorOpen}
+        onClose={() => setPromoSelectorOpen(false)}
+        title="Sélectionner les promos à afficher"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              size="xs"
+              variant="light"
+              color="green"
+              onClick={selectAllPromos}
+            >
+              Tout sélectionner
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              onClick={deselectAllPromos}
+            >
+              Tout désélectionner
+            </Button>
+          </div>
+
+          <div className="max-h-80 space-y-2 overflow-y-auto">
+            {Object.entries(groupedData).map(([promoName, items]) => (
+              <div
+                key={promoName}
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
+              >
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`promo-${promoName}`}
+                    checked={isPromoSelected(promoName)}
+                    onChange={(e) =>
+                      togglePromoSelection(promoName, e.target.checked)
+                    }
+                    className="mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor={`promo-${promoName}`}
+                    className="cursor-pointer font-medium text-gray-900"
+                  >
+                    {promoName}
+                  </label>
+                </div>
+                <Badge color="gray" size="sm">
+                  {items.length} module{items.length > 1 ? "s" : ""}
+                </Badge>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setPromoSelectorOpen(false)}>Fermer</Button>
+          </div>
+        </div>
       </Modal>
     </Container>
   );
