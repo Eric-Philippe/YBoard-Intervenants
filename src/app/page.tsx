@@ -1,61 +1,34 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Title,
-  Button,
-  Table,
-  Badge,
-  Select,
-  LoadingOverlay,
-  Group,
-  Text,
-  Paper,
-  Modal,
-  TextInput,
-  NumberInput,
-  Alert,
-} from "@mantine/core";
+import { Container, LoadingOverlay, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { api } from "~/trpc/react";
 import { useAuth } from "~/contexts/AuthContext";
 import { useModal } from "~/contexts/ModalContext";
 import { useRouter } from "next/navigation";
-import type { Decimal } from "@prisma/client/runtime/library";
 
-interface CartesianData {
-  promoModule: {
-    id: string;
-    moduleId: string;
-    promoId: string;
-    workload: number;
-    module: { id: string; name: string };
-    promo: { id: string; level: string; specialty: string };
-  };
-  ongoing: Array<{
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-  potential: Array<{
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-  selected: Array<{
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-}
-
-interface Teacher {
-  id: string;
-  lastname: string;
-  firstname: string;
-  rate?: Decimal | null;
-}
-
-interface CurrentRelation {
-  type: "ongoing" | "potential" | "selected";
-  promoModuleId: string;
-  moduleWorkload: number;
-}
+import {
+  MainPageHeader,
+  HelpTip,
+  EmptyState,
+  PromoSection,
+  EditRelationModal,
+  CreateUserModal,
+  PromoSelectionModal,
+  PotentialTeachersModal,
+} from "./components/main";
+import {
+  groupByPromo,
+  loadSelectedPromos,
+  saveSelectedPromos,
+  getNumericRate,
+} from "./components/main/utils";
+import type {
+  CartesianData,
+  Teacher,
+  CurrentRelation,
+} from "./components/main/types";
 
 export default function MainPage() {
   const [cartesianData, setCartesianData] = useState<CartesianData[]>([]);
@@ -66,37 +39,10 @@ export default function MainPage() {
   const [selectedPromos, setSelectedPromos] = useState<Set<string>>(new Set());
   const [promoSelectorOpen, setPromoSelectorOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // Clé pour le localStorage
-  const STORAGE_KEY = "yboard-selected-promos";
-
-  // Fonctions utilitaires pour le localStorage
-  const loadSelectedPromos = (): Set<string> => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as string[];
-          return new Set(parsed);
-        } catch {
-          return new Set();
-        }
-      }
-    }
-    return new Set();
-  };
-
-  const saveSelectedPromos = (promos: Set<string>) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(promos)));
-    }
-  };
-
-  // Utility function to convert Decimal to number
-  const getNumericRate = (rate: Decimal | null | undefined): number => {
-    if (!rate) return 0;
-    return typeof rate === "number" ? rate : Number(rate.toString());
-  };
+  const [potentialTeachersModal, setPotentialTeachersModal] = useState(false);
+  const [selectedPotentialTeachers, setSelectedPotentialTeachers] = useState<
+    Array<{ teacher: { id: string; lastname: string; firstname: string } }>
+  >([]);
 
   // Modals
   const { createUserModal, setCreateUserModal } = useModal();
@@ -341,22 +287,13 @@ export default function MainPage() {
     );
   };
 
-  const getTeacherNames = (
-    relations: { teacher: { lastname: string; firstname: string } }[],
+  const openPotentialTeachersModal = (
+    teachers: Array<{
+      teacher: { id: string; lastname: string; firstname: string };
+    }>,
   ) => {
-    return relations
-      .map((rel) => `${rel.teacher.lastname} ${rel.teacher.firstname}`)
-      .join(", ");
-  };
-
-  const groupByPromo = (data: CartesianData[]) => {
-    const grouped: Record<string, CartesianData[]> = {};
-    data.forEach((item) => {
-      const promoKey = `${item.promoModule.promo.level} ${item.promoModule.promo.specialty}`;
-      grouped[promoKey] ??= [];
-      grouped[promoKey].push(item);
-    });
-    return grouped;
+    setSelectedPotentialTeachers(teachers);
+    setPotentialTeachersModal(true);
   };
 
   const groupedData = groupByPromo(cartesianData);
@@ -407,36 +344,15 @@ export default function MainPage() {
     saveSelectedPromos(new Set());
   };
 
+  const filteredPromos = Object.entries(groupedData).filter(([promoName]) =>
+    isPromoSelected(promoName),
+  );
+
   return (
     <Container size="xl" className="py-8">
       <LoadingOverlay visible={loading} />
 
-      <div className="mb-8 flex items-center justify-between">
-        <Title order={1} className="text-gray-900">
-          YBoard - Intervenants - Main Page
-        </Title>
-        <Button
-          leftSection={
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          }
-          variant="light"
-          onClick={() => setPromoSelectorOpen(true)}
-        >
-          Sélectionner les promos
-        </Button>
-      </div>
+      <MainPageHeader onOpenPromoSelector={() => setPromoSelectorOpen(true)} />
 
       {error && (
         <Alert color="red" className="mb-6">
@@ -445,467 +361,61 @@ export default function MainPage() {
       )}
 
       <div className="space-y-8">
-        {Object.keys(groupedData).length > 0 && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-blue-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">💡 Astuce</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>
-                    Cliquez sur le nom d&apos;un module (🔍) pour accéder
-                    directement à ses détails complets !
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <HelpTip groupedDataLength={Object.keys(groupedData).length} />
+
+        {filteredPromos.length === 0 && (
+          <EmptyState onOpenPromoSelector={() => setPromoSelectorOpen(true)} />
         )}
 
-        {Object.entries(groupedData).filter(([promoName]) =>
-          isPromoSelected(promoName),
-        ).length === 0 && (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center">
-            <div className="flex flex-col items-center">
-              <svg
-                className="mb-4 h-12 w-12 text-yellow-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-              <h3 className="mb-2 text-lg font-medium text-yellow-800">
-                Aucune promo sélectionnée
-              </h3>
-              <p className="mb-4 text-yellow-700">
-                Cliquez sur le bouton &quot;Sélectionner les promos&quot; pour
-                choisir quelles promos afficher.
-              </p>
-              <Button
-                onClick={() => setPromoSelectorOpen(true)}
-                variant="light"
-                color="yellow"
-              >
-                Sélectionner des promos
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {Object.entries(groupedData)
-          .filter(([promoName]) => isPromoSelected(promoName))
-          .map(([promoName, items]) => (
-            <Paper key={promoName} shadow="sm" p="md">
-              <div
-                className="mb-4 flex cursor-pointer items-center justify-between border-b pb-2"
-                onClick={() => togglePromoExpansion(promoName)}
-              >
-                <Title order={3} className="text-blue-800">
-                  {promoName}
-                </Title>
-                <div className="flex items-center gap-2">
-                  <Badge color="gray" size="sm">
-                    {items.length} module{items.length > 1 ? "s" : ""}
-                  </Badge>
-                  <svg
-                    className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${
-                      isPromoExpanded(promoName) ? "rotate-90" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              {isPromoExpanded(promoName) && (
-                <div className="overflow-x-auto">
-                  <Table striped highlightOnHover>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Module</Table.Th>
-                        <Table.Th>Workload</Table.Th>
-                        <Table.Th>Ongoing Teachers</Table.Th>
-                        <Table.Th>Potential Teachers</Table.Th>
-                        <Table.Th>Selected Teachers</Table.Th>
-                        <Table.Th>Actions</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {items.map((item) => (
-                        <Table.Tr key={item.promoModule.id}>
-                          <Table.Td>
-                            <button
-                              onClick={() => {
-                                router.push(
-                                  `/modules/details?promoId=${item.promoModule.promo.id}&moduleId=${item.promoModule.id}`,
-                                );
-                              }}
-                              className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
-                            >
-                              🔍 {item.promoModule.module.name}
-                            </button>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge color="blue">
-                              {item.promoModule.workload}h
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size="sm">
-                              {item.ongoing.length > 0
-                                ? getTeacherNames(item.ongoing)
-                                : "None"}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size="sm">
-                              {item.potential.length > 0
-                                ? getTeacherNames(item.potential)
-                                : "None"}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size="sm">
-                              {item.selected.length > 0
-                                ? getTeacherNames(item.selected)
-                                : "None"}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Group gap="xs">
-                              <Button
-                                size="xs"
-                                variant="light"
-                                color="green"
-                                onClick={() =>
-                                  openRelationModal(
-                                    "ongoing",
-                                    item.promoModule.id,
-                                    item.promoModule.workload,
-                                  )
-                                }
-                              >
-                                + Ongoing
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="light"
-                                color="orange"
-                                onClick={() =>
-                                  openRelationModal(
-                                    "potential",
-                                    item.promoModule.id,
-                                    item.promoModule.workload,
-                                  )
-                                }
-                              >
-                                + Potential
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="light"
-                                color="blue"
-                                onClick={() =>
-                                  openRelationModal(
-                                    "selected",
-                                    item.promoModule.id,
-                                    item.promoModule.workload,
-                                  )
-                                }
-                              >
-                                + Selected
-                              </Button>
-                            </Group>
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </div>
-              )}
-            </Paper>
-          ))}
+        {filteredPromos.map(([promoName, items]) => (
+          <PromoSection
+            key={promoName}
+            promoName={promoName}
+            items={items}
+            isExpanded={isPromoExpanded(promoName)}
+            onToggleExpansion={togglePromoExpansion}
+            onOpenRelationModal={openRelationModal}
+            onOpenPotentialTeachersModal={openPotentialTeachersModal}
+          />
+        ))}
       </div>
 
-      {/* Edit Relation Modal */}
-      <Modal
+      {/* Modals */}
+      <EditRelationModal
         opened={editRelationModal}
         onClose={() => setEditRelationModal(false)}
-        title={`Add ${currentRelation?.type} Teachers`}
-        size="lg"
-      >
-        <form onSubmit={relationForm.onSubmit(handleEditRelation)}>
-          {/* Teacher Selection */}
-          <div className="mb-4">
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Select Teachers
-            </label>
-            <Select
-              placeholder="Choose a teacher to add"
-              searchable
-              data={teachers
-                .filter(
-                  (teacher) =>
-                    !relationForm.values.teacherWorkloads.find(
-                      (tw) => tw.teacherId === teacher.id,
-                    ),
-                )
-                .map((teacher) => ({
-                  value: teacher.id,
-                  label: `${teacher.lastname} ${teacher.firstname}`,
-                }))}
-              onChange={(value) => {
-                if (value) {
-                  addTeacherToRelation(value);
-                }
-              }}
-              value={null}
-            />
-          </div>
+        currentRelation={currentRelation}
+        teachers={teachers}
+        relationForm={relationForm}
+        onSubmit={handleEditRelation}
+        onAddTeacher={addTeacherToRelation}
+        onRemoveTeacher={removeTeacherFromRelation}
+        onUpdateWorkload={updateTeacherWorkload}
+        onUpdateRate={updateTeacherRate}
+      />
 
-          {/* Selected Teachers with Individual Workloads and Rates */}
-          {relationForm.values.teacherWorkloads.length > 0 && (
-            <div className="mb-6">
-              <label className="mb-3 block text-sm font-medium text-gray-700">
-                Teachers, their Workloads and Hourly Rates
-              </label>
-              <div className="space-y-3">
-                {relationForm.values.teacherWorkloads.map(
-                  (teacherWorkload, _index) => {
-                    const teacher = teachers.find(
-                      (t) => t.id === teacherWorkload.teacherId,
-                    );
-                    const teacherDefaultRate = getNumericRate(teacher?.rate);
-
-                    return (
-                      <div
-                        key={teacherWorkload.teacherId}
-                        className="flex items-center gap-3 rounded-lg border border-gray-200 p-3"
-                      >
-                        <div className="flex-1">
-                          <Text size="sm" fw={500}>
-                            {teacher?.lastname} {teacher?.firstname}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            Default rate: {teacherDefaultRate}€/h
-                          </Text>
-                        </div>
-                        <div className="w-32">
-                          <label className="mb-1 block text-xs text-gray-600">
-                            Hours
-                          </label>
-                          <NumberInput
-                            placeholder="Hours"
-                            min={1}
-                            value={teacherWorkload.workload}
-                            onChange={(value) => {
-                              if (typeof value === "number") {
-                                updateTeacherWorkload(
-                                  teacherWorkload.teacherId,
-                                  value,
-                                );
-                              }
-                            }}
-                            size="sm"
-                          />
-                        </div>
-                        <div className="w-32">
-                          <label className="mb-1 block text-xs text-gray-600">
-                            Rate (€/h)
-                          </label>
-                          <NumberInput
-                            placeholder="Rate"
-                            min={0}
-                            step={0.01}
-                            value={teacherWorkload.rate ?? teacherDefaultRate}
-                            onChange={(value) => {
-                              if (typeof value === "number") {
-                                updateTeacherRate(
-                                  teacherWorkload.teacherId,
-                                  value,
-                                );
-                              }
-                            }}
-                            size="sm"
-                          />
-                        </div>
-                        <Button
-                          size="xs"
-                          variant="light"
-                          color="red"
-                          onClick={() =>
-                            removeTeacherFromRelation(teacherWorkload.teacherId)
-                          }
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-          )}
-
-          {relationForm.values.teacherWorkloads.length === 0 && (
-            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-center">
-              <Text size="sm" c="dimmed">
-                No teachers selected. Please add teachers using the dropdown
-                above.
-              </Text>
-            </div>
-          )}
-
-          <Group justify="flex-end">
-            <Button variant="light" onClick={() => setEditRelationModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={relationForm.values.teacherWorkloads.length === 0}
-            >
-              Add Teachers
-            </Button>
-          </Group>
-        </form>
-      </Modal>
-
-      {/* Create User Modal */}
-      <Modal
+      <CreateUserModal
         opened={createUserModal}
         onClose={() => setCreateUserModal(false)}
-        title="Créer un Nouvel Utilisateur"
-      >
-        <form onSubmit={userForm.onSubmit(handleCreateUser)}>
-          <TextInput
-            label="Prénom"
-            placeholder="Entrez le prénom"
-            required
-            className="mb-4"
-            {...userForm.getInputProps("firstname")}
-          />
-          <TextInput
-            label="Nom"
-            placeholder="Entrez le nom"
-            required
-            className="mb-4"
-            {...userForm.getInputProps("lastname")}
-          />
-          <TextInput
-            label="Email"
-            placeholder="email@example.com"
-            required
-            className="mb-4"
-            {...userForm.getInputProps("email")}
-          />
-          <TextInput
-            label="Mot de passe"
-            placeholder="Minimum 6 caractères"
-            type="password"
-            required
-            className="mb-6"
-            {...userForm.getInputProps("password")}
-          />
-          <Group justify="flex-end">
-            <Button variant="light" onClick={() => setCreateUserModal(false)}>
-              Annuler
-            </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Créer
-            </Button>
-          </Group>
-        </form>
-      </Modal>
+        userForm={userForm}
+        onSubmit={handleCreateUser}
+      />
 
-      {/* Promo Selection Modal */}
-      <Modal
+      <PromoSelectionModal
         opened={promoSelectorOpen}
         onClose={() => setPromoSelectorOpen(false)}
-        title="Sélectionner les promos à afficher"
-        size="md"
-      >
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button
-              size="xs"
-              variant="light"
-              color="green"
-              onClick={selectAllPromos}
-            >
-              Tout sélectionner
-            </Button>
-            <Button
-              size="xs"
-              variant="light"
-              color="red"
-              onClick={deselectAllPromos}
-            >
-              Tout désélectionner
-            </Button>
-          </div>
+        groupedData={groupedData}
+        selectedPromos={selectedPromos}
+        onTogglePromoSelection={togglePromoSelection}
+        onSelectAllPromos={selectAllPromos}
+        onDeselectAllPromos={deselectAllPromos}
+      />
 
-          <div className="max-h-80 space-y-2 overflow-y-auto">
-            {Object.entries(groupedData).map(([promoName, items]) => (
-              <div
-                key={promoName}
-                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
-              >
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`promo-${promoName}`}
-                    checked={isPromoSelected(promoName)}
-                    onChange={(e) =>
-                      togglePromoSelection(promoName, e.target.checked)
-                    }
-                    className="mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor={`promo-${promoName}`}
-                    className="cursor-pointer font-medium text-gray-900"
-                  >
-                    {promoName}
-                  </label>
-                </div>
-                <Badge color="gray" size="sm">
-                  {items.length} module{items.length > 1 ? "s" : ""}
-                </Badge>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => setPromoSelectorOpen(false)}>Fermer</Button>
-          </div>
-        </div>
-      </Modal>
+      <PotentialTeachersModal
+        opened={potentialTeachersModal}
+        onClose={() => setPotentialTeachersModal(false)}
+        selectedPotentialTeachers={selectedPotentialTeachers}
+      />
     </Container>
   );
 }

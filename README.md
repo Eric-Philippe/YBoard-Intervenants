@@ -6,6 +6,8 @@
 
 This application enables centralized and efficient management of teachers/instructors, their assignment to various educational modules, and workload tracking across all Ynov programs.
 
+![YBoard Screenshot](./img/yboard.png)
+
 ### 🌟 Key Features
 
 - **Teacher Management**: Create, modify, and delete instructor profiles
