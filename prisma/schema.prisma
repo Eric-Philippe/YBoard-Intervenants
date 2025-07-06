@@ -78,8 +78,6 @@ model potential {
   promoModulesId      String       @map("Id_PromoModules")
   workload            Int
   rate                Decimal?     @db.Decimal(5,2)
-  interview_date      DateTime?    @db.Date
-  interview_comments  String?      @db.Text
   decision            Boolean?
   teacher             Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   promoModules        PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)

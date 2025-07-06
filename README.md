@@ -100,6 +100,7 @@ erDiagram
         uuid Id_Teacher FK "NOT NULL"
         uuid Id_PromoModules FK "NOT NULL"
         int workload "NOT NULL"
+        decimal_5_2 rate "NULL"
     }
 
     potential {
@@ -109,12 +110,14 @@ erDiagram
         date interview_date "NULL"
         text interview_comments "NULL"
         boolean decision "NULL"
+        decimal_5_2 rate "NULL"
     }
 
     selected {
         uuid Id_Teacher FK "NOT NULL"
         uuid Id_PromoModules FK "NOT NULL"
         int workload "NOT NULL"
+        decimal_5_2 rate "NULL"
     }
 
     Promos ||--o{ PromoModules : "has"
