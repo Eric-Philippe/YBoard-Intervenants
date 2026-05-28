@@ -22,9 +22,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
 
   // Pages où on ne veut pas afficher la sidebar
-  const hideSidebarRoutes = ["/login", "/register"];
+  const hideSidebarRoutes = ["/login", "/register", "/sondage"];
   const shouldShowSidebar =
-    isAuthenticated && !hideSidebarRoutes.includes(pathname);
+    isAuthenticated &&
+    !hideSidebarRoutes.includes(pathname);
 
   if (loading) {
     return children;

@@ -55,6 +55,11 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
+            // Include auth token when present so protectedProcedures can verify it
+            if (typeof window !== "undefined") {
+              const token = localStorage.getItem("token");
+              if (token) headers.set("authorization", `Bearer ${token}`);
+            }
             return headers;
           },
         }),
@@ -74,5 +79,5 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 function getBaseUrl() {
   if (typeof window !== "undefined") return window.location.origin;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
+  return `https://yboard.fr/sondage`;
 }

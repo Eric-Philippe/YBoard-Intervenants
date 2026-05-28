@@ -6,7 +6,8 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
+import jwt from "jsonwebtoken";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -104,3 +105,26 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+const JWT_SECRET = process.env.JWT_SECRET ?? "your-secret-key";
+
+const authMiddleware = t.middleware(({ ctx, next }) => {
+  const authHeader = ctx.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Non authentifié" });
+  }
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Token invalide" });
+  }
+  return next({ ctx });
+});
+
+/**
+ * Protected procedure — requires a valid JWT (same token used by YBoard login).
+ */
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(authMiddleware);

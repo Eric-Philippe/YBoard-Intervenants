@@ -108,3 +108,82 @@ model Users {
 
   @@map("Users")
 }
+
+// ─── Sondage (Survey) — independent of the teacher management domain ───────
+
+model SurveyCategory {
+  id             String            @id @default(uuid())
+  slug           String            @unique @db.VarChar(100)
+  label          String            @db.VarChar(255)
+  level          String            @db.VarChar(50)
+  year           Int
+  specialization String?           @db.VarChar(100)
+  sortOrder      Int               @map("sort_order")
+  title          String            @db.Text
+  introduction   String            @db.Text
+  subjects       SurveySubject[]
+
+  @@map("survey_categories")
+}
+
+model SurveySubject {
+  id            String                  @id @default(uuid())
+  categoryId    String                  @map("category_id")
+  title         String                  @db.VarChar(255)
+  volumeHoraire Int                     @map("volume_horaire")
+  periode       String                  @db.VarChar(100)
+  avecMentor    Boolean                 @default(false) @map("avec_mentor")
+  contenu       String                  @default("") @db.Text
+  sortOrder     Int                     @map("sort_order")
+  category      SurveyCategory          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  responses     SurveySubjectResponse[]
+
+  @@map("survey_subjects")
+}
+
+model SurveySubmission {
+  id                     String                  @id @default(uuid())
+  createdAt              DateTime                @default(now()) @map("created_at")
+  origin                 String?                 @db.VarChar(255)
+  nom                    String                  @db.VarChar(255)
+  prenom                 String                  @db.VarChar(255)
+  email                  String                  @unique @db.VarChar(255)
+  telephone              String                  @default("") @db.VarChar(50)
+  niveauAcademique       String                  @map("niveau_academique") @db.VarChar(20)
+  niveauAcademiqueAutre  String?                 @map("niveau_academique_autre") @db.VarChar(255)
+  intituleDiplome        String                  @map("intitule_diplome") @db.Text
+  anneesExperience       String                  @map("annees_experience") @db.VarChar(20)
+  domainesExercice       String                  @default("") @map("domaines_exercice") @db.Text
+  projetsPersonnels      String                  @default("") @map("projets_personnels") @db.Text
+  lienProfil             String                  @default("") @map("lien_profil") @db.Text
+  remarques              String                  @default("") @db.Text
+  finalChoice            String                  @default("") @map("final_choice") @db.VarChar(50)
+  subjectResponses       SurveySubjectResponse[]
+  teacherLinks           SurveySubmissionTeacher[]
+
+  @@map("survey_submissions")
+}
+
+model SurveySubmissionTeacher {
+  id           String           @id @default(uuid())
+  submissionId String           @map("submission_id")
+  teacherId    String           @map("teacher_id")
+  linkedAt     DateTime         @default(now()) @map("linked_at")
+  submission   SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, teacherId])
+  @@map("survey_submission_teachers")
+}
+
+model SurveySubjectResponse {
+  id            String           @id @default(uuid())
+  submissionId  String           @map("submission_id")
+  subjectId     String           @map("subject_id")
+  response      String           @default("non") @db.VarChar(20)
+  conditionText String?          @map("condition_text") @db.Text
+  submission    SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  subject       SurveySubject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, subjectId])
+  @@map("survey_subject_responses")
+}

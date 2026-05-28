@@ -11,7 +11,9 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register");
 
-  const isPublicPage = isAuthPage;
+  const isSurveyPublicPage = request.nextUrl.pathname === "/sondage";
+
+  const isPublicPage = isAuthPage || isSurveyPublicPage;
 
   // If user is not authenticated and trying to access protected route
   if (!token && !isPublicPage) {

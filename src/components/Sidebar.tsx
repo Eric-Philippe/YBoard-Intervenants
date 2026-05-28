@@ -27,7 +27,11 @@ import {
   IconBuildingSkyscraper,
   IconUserCog,
   IconPlus,
+  IconClipboardList,
+  IconExternalLink,
 } from "@tabler/icons-react";
+
+const ENABLE_SONDAGE = process.env.NEXT_PUBLIC_ENABLE_SONDAGE !== "false";
 
 type SidebarProps = Record<string, never>;
 
@@ -339,6 +343,32 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 color="red"
               />
             </MenuSection>
+
+            {ENABLE_SONDAGE && (
+              <>
+                <div className="my-4">
+                  <div className="mx-3 h-px bg-gray-100" />
+                </div>
+
+                <MenuSection
+                  icon={<IconClipboardList size={20} />}
+                  label="Questionnaire"
+                  menuKey="sondage"
+                >
+                  <SubMenuItem
+                    icon={<IconExternalLink size={16} />}
+                    label="Formulaire public"
+                    onClick={() => router.push("/sondage")}
+                    color="blue"
+                  />
+                  <SubMenuItem
+                    icon={<IconSettings size={16} />}
+                    label="Administration"
+                    onClick={() => router.push("/sondage/admin")}
+                  />
+                </MenuSection>
+              </>
+            )}
 
             <div className="my-4">
               <div className="mx-3 h-px bg-gray-100" />

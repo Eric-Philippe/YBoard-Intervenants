@@ -5,6 +5,8 @@ import { modulesRouter } from "~/server/api/routers/modules";
 import { promoModulesRouter } from "~/server/api/routers/promoModules";
 import { relationsRouter } from "~/server/api/routers/relations";
 import { usersRouter } from "~/server/api/routers/users";
+import { surveyRouter } from "~/server/api/routers/survey";
+import { surveyAdminRouter } from "~/server/api/routers/surveyAdmin";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -20,6 +22,8 @@ export const appRouter = createTRPCRouter({
   promoModules: promoModulesRouter,
   relations: relationsRouter,
   users: usersRouter,
+  survey: surveyRouter,
+  surveyAdmin: surveyAdminRouter,
 });
 
 // export type definition of API
