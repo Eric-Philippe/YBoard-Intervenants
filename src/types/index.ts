@@ -1,6 +1,6 @@
 import type { Decimal } from "@prisma/client/runtime/library";
 
-// Type utility to convert Prisma Decimal to number
+// Type utility to convert Prisma Decimal to number .
 export type DecimalToNumber<T> = T extends Decimal ? number : T;
 
 export interface User {
