@@ -10,17 +10,25 @@ export default function SubmitSuccess() {
           </span>
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Questionnaire soumis</h1>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Questionnaire soumis
+          </h1>
           <p className="mt-3 leading-relaxed text-slate-500">
-            Merci d&apos;avoir pris le temps de répondre à notre questionnaire. Votre réponse a bien été
-            enregistrée et sera traitée par notre équipe dans les meilleurs délais.
+            Merci d&apos;avoir pris le temps de répondre à notre questionnaire.
+            Votre réponse a bien été enregistrée et sera traitée par notre
+            équipe dans les meilleurs délais.
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
           <FaEnvelope className="h-4 w-4 flex-shrink-0" />
-          <span>Notre équipe prendra contact avec vous prochainement pour faire suite à votre candidature.</span>
+          <span>
+            Notre équipe prendra contact avec vous prochainement pour faire
+            suite à votre candidature.
+          </span>
         </div>
-        <p className="text-xs text-slate-400">YLab — Questionnaires Matières</p>
+        <p className="text-xs text-slate-400">
+          YBoard — Questionnaires Matières
+        </p>
       </div>
     </div>
   );
