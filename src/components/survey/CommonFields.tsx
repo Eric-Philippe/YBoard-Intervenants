@@ -102,7 +102,6 @@ export default function CommonFields({ errors = {} }: { errors?: Partial<Record<
               { value: "bac3", label: "Bac+3" },
               { value: "bac5", label: "Bac+5" },
               { value: "bac8", label: "Bac+8" },
-              { value: "autre", label: "Autre" },
             ].map((opt) => (
               <label
                 key={opt.value}
@@ -124,15 +123,6 @@ export default function CommonFields({ errors = {} }: { errors?: Partial<Record<
               </label>
             ))}
           </div>
-          {formData.niveauAcademique === "autre" && (
-            <input
-              name="niveauAcademiqueAutre"
-              value={formData.niveauAcademiqueAutre}
-              onChange={handleChange}
-              placeholder="Précisez votre niveau..."
-              className={`${inputClass} mt-2`}
-            />
-          )}
         </Field>
 
         <Field

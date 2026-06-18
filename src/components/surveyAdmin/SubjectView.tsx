@@ -167,6 +167,7 @@ function SubjectRow({
       >
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-slate-800">{subject.title}</p>
+          <p className="text-xs text-slate-400">{subject.volumeHoraire}h</p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           {ouiCount > 0 && (
