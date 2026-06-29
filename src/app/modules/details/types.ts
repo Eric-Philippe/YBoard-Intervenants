@@ -22,6 +22,7 @@ export interface Promo {
       id: string;
       name: string;
     };
+    selected?: Array<{ workload: number }>;
   }>;
 }
 

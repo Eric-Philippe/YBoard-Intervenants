@@ -60,6 +60,7 @@ function ModulesPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<"name" | "workload" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const modulesListRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -214,6 +215,16 @@ function ModulesPageContent() {
     setSelectedModule(updated ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modulesQuery.data]);
+
+  // Smoothly scroll down to the module list once a promo is selected
+  useEffect(() => {
+    if (selectedPromo && modulesListRef.current) {
+      modulesListRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [selectedPromo]);
 
   // Smoothly scroll down to the unlocked details panel once a module is selected
   useEffect(() => {
@@ -479,6 +490,23 @@ function ModulesPageContent() {
     );
   };
 
+  // Global coverage across all modules of a promo (Selected workload / total workload)
+  const calculatePromoCoverage = (promo: Promo): number => {
+    const totalWorkload = calculatePromoTotalWorkload(promo);
+    if (totalWorkload === 0) return 0;
+    const totalSelected =
+      promo.promoModules?.reduce(
+        (total, promoModule) =>
+          total +
+          (promoModule.selected?.reduce(
+            (sum, relation) => sum + relation.workload,
+            0,
+          ) ?? 0),
+        0,
+      ) ?? 0;
+    return Math.round((totalSelected / totalWorkload) * 10000) / 100;
+  };
+
   if (promosQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -571,6 +599,7 @@ function ModulesPageContent() {
                 {promos.map((promo) => {
                   const totalWorkload = calculatePromoTotalWorkload(promo);
                   const moduleCount = promo.promoModules?.length ?? 0;
+                  const coverage = calculatePromoCoverage(promo);
 
                   return (
                     <button
@@ -599,6 +628,24 @@ function ModulesPageContent() {
                           </span>
                         </div>
                       </div>
+                      {moduleCount > 0 && (
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">
+                              Couverture globale
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 font-medium ${getWorkloadStatusColor(coverage)}`}
+                              title={getWorkloadStatusText(coverage)}
+                            >
+                              {coverage}%
+                            </span>
+                          </div>
+                          <div className="mt-1">
+                            <CoverageBar coverage={coverage} size="sm" />
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-2 text-xs text-gray-500">
                         Cliquez pour voir les modules
                       </div>
@@ -610,7 +657,7 @@ function ModulesPageContent() {
 
             {/* Modules List */}
             {selectedPromo && (
-              <div>
+              <div ref={modulesListRef} className="scroll-mt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-800">

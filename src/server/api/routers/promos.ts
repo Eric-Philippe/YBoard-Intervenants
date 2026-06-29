@@ -22,6 +22,11 @@ export const promosRouter = createTRPCRouter({
           promoModules: {
             include: {
               module: true,
+              selected: {
+                select: {
+                  workload: true,
+                },
+              },
             },
           },
         },
