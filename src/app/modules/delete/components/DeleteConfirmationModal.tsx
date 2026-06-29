@@ -1,3 +1,10 @@
+import {
+  LuBookOpen,
+  LuLoaderCircle,
+  LuTrash2,
+  LuTriangleAlert,
+  LuX,
+} from "react-icons/lu";
 import type { ModuleWithPromoModules } from "../types";
 import { getPromoModulesCount, getRelationsCount } from "../utils";
 
@@ -33,15 +40,19 @@ export function DeleteConfirmationModal({
               />
             </svg>
           </div>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
-            ⚠️ Confirmer la suppression définitive
+          <h3 className="mt-4 flex items-center justify-center gap-2 text-lg font-medium text-gray-900">
+            <LuTriangleAlert className="h-5 w-5 text-red-600" />
+            Confirmer la suppression définitive
           </h3>
           <div className="mt-2 px-7 py-3">
             <p className="mb-3 text-sm text-gray-700">
               Vous êtes sur le point de supprimer définitivement le module :
             </p>
             <div className="mb-3 rounded-md bg-red-50 p-3">
-              <p className="font-semibold text-red-900">📚 {module.name}</p>
+              <p className="flex items-center justify-center gap-2 font-semibold text-red-900">
+                <LuBookOpen className="h-4 w-4" />
+                {module.name}
+              </p>
               <p className="mt-2 text-sm text-red-700">
                 • {getPromoModulesCount(module)} association(s) avec des promos
                 <br />• {getRelationsCount(module)} relation(s) avec les
@@ -51,7 +62,7 @@ export function DeleteConfirmationModal({
             </div>
             <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3">
               <p className="text-sm font-medium text-yellow-800">
-                🚨 Cette action est IRRÉVERSIBLE !
+                Cette action est IRRÉVERSIBLE !
               </p>
               <p className="mt-1 text-xs text-yellow-700">
                 Toutes les données supprimées ne pourront pas être récupérées.
@@ -62,17 +73,23 @@ export function DeleteConfirmationModal({
             <div className="flex space-x-3">
               <button
                 onClick={onCancel}
-                className="flex-1 rounded-md bg-gray-500 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-gray-600"
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-gray-500 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-gray-600"
                 disabled={loading}
               >
-                ❌ Annuler
+                <LuX className="h-4 w-4" />
+                Annuler
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 rounded-md bg-red-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 disabled={loading}
               >
-                {loading ? "⏳ Suppression..." : "🗑️ Supprimer définitivement"}
+                {loading ? (
+                  <LuLoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LuTrash2 className="h-4 w-4" />
+                )}
+                {loading ? "Suppression..." : "Supprimer définitivement"}
               </button>
             </div>
           </div>

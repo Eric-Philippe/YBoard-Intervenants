@@ -25,9 +25,9 @@ export function DroppableZone({
         <span className={`mr-2 h-3 w-3 rounded-full ${color}`}></span>
         {title} ({count})
         <span className="ml-2 text-sm text-gray-500">
-          {id === "ongoing" && "🔵 Peut être dupliqué vers Potential/Selected"}
-          {id === "potential" && "🟠 Peut être déplacé vers Selected"}
-          {id === "selected" && "🟣 Peut être déplacé vers Potential"}
+          {id === "ongoing" && "Peut être dupliqué vers Potential/Selected"}
+          {id === "potential" && "Peut être déplacé vers Selected"}
+          {id === "selected" && "Peut être déplacé vers Potential"}
         </span>
       </h3>
       <div

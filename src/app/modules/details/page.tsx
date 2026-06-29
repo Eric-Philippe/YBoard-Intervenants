@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "~/contexts/AuthContext";
 import { api } from "~/trpc/react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { LuLayoutGrid, LuSearch } from "react-icons/lu";
+import { StepIndicator } from "~/components";
 
 // Import types and components
 import type { Promo, PromoModule, TeacherRelation } from "./types";
@@ -26,6 +28,7 @@ function ModuleDetailsContent() {
   const [activeTeacher, setActiveTeacher] = useState<TeacherRelation | null>(
     null,
   );
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -202,6 +205,16 @@ function ModuleDetailsContent() {
     selectedPromo,
     selectedModule,
   ]);
+
+  // Smoothly scroll down to the unlocked details panel once a module is selected
+  useEffect(() => {
+    if (selectedModule && detailsRef.current) {
+      detailsRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [selectedModule]);
 
   // Drag and drop handlers
   const handleDragStart = (event: DragStartEvent) => {
@@ -380,8 +393,9 @@ function ModuleDetailsContent() {
         <div className="rounded-lg bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">
-                🔍 Détails des Modules
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                <LuSearch className="h-6 w-6 text-blue-600" />
+                Détails des Modules
               </h1>
               <div className="flex space-x-3">
                 <button
@@ -398,6 +412,16 @@ function ModuleDetailsContent() {
                 </button>
               </div>
             </div>
+
+            {/* Navigation Stepper */}
+            <StepIndicator
+              steps={[
+                { label: "Promo" },
+                { label: "Module" },
+                { label: "Détails" },
+              ]}
+              currentStep={selectedModule ? 2 : selectedPromo ? 1 : 0}
+            />
 
             {/* Promo Selection */}
             <PromoSelection
@@ -419,9 +443,10 @@ function ModuleDetailsContent() {
 
             {/* Module Details */}
             {selectedModule && (
-              <div>
-                <h2 className="mb-6 text-xl font-semibold text-gray-800">
-                  📊 Détails du Module: {selectedModule.module.name}
+              <div ref={detailsRef} className="scroll-mt-6">
+                <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-gray-800">
+                  <LuLayoutGrid className="h-5 w-5 text-purple-600" />
+                  Détails du Module: {selectedModule.module.name}
                 </h2>
 
                 {(() => {

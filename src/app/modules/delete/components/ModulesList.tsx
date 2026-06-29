@@ -1,3 +1,4 @@
+import { LuTrash2 } from "react-icons/lu";
 import type { ModuleWithPromoModules, Promo } from "../types";
 import { ModuleCard } from "./ModuleCard";
 
@@ -20,8 +21,9 @@ export function ModulesList({
 }: ModulesListProps) {
   return (
     <div>
-      <h2 className="mb-4 text-xl font-semibold text-gray-800">
-        🗑️ Modules de {selectedPromo.level} - {selectedPromo.specialty}
+      <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-800">
+        <LuTrash2 className="h-5 w-5 text-red-600" />
+        Modules de {selectedPromo.level} - {selectedPromo.specialty}
       </h2>
 
       {modules.length === 0 ? (

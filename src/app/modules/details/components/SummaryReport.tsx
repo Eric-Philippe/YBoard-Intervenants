@@ -1,3 +1,4 @@
+import { LuClipboardList, LuCoins } from "react-icons/lu";
 import type { PromoModule, WorkloadStats } from "../types";
 
 interface SummaryReportProps {
@@ -8,8 +9,9 @@ interface SummaryReportProps {
 export function SummaryReport({ selectedModule, stats }: SummaryReportProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 p-6">
-      <h3 className="mb-4 text-lg font-medium text-gray-900">
-        📋 Rapport de Synthèse
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-900">
+        <LuClipboardList className="h-5 w-5 text-blue-600" />
+        Rapport de Synthèse
       </h3>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div>
@@ -58,8 +60,9 @@ export function SummaryReport({ selectedModule, stats }: SummaryReportProps) {
           </ul>
         </div>
         <div>
-          <h4 className="mb-2 font-medium text-gray-800">
-            💰 Informations Financières
+          <h4 className="mb-2 flex items-center gap-2 font-medium text-gray-800">
+            <LuCoins className="h-4 w-4 text-amber-600" />
+            Informations Financières
           </h4>
           <ul className="space-y-1 text-sm text-gray-600">
             <li>

@@ -1,4 +1,11 @@
 import { useDraggable } from "@dnd-kit/core";
+import {
+  LuGraduationCap,
+  LuGripVertical,
+  LuTrash2,
+  LuUser,
+  LuUserCheck,
+} from "react-icons/lu";
 import type { TeacherRelation, TeacherStatus } from "../types";
 import { getStatusColor, extractNumericRate } from "../utils";
 
@@ -74,10 +81,16 @@ export function DraggableTeacher({
           {...attributes}
           {...listeners}
         >
-          <span className="mr-2">🤏</span>
-          {status === "ongoing" && "👨‍🏫"}
-          {status === "potential" && "👤"}
-          {status === "selected" && "✅"}
+          <LuGripVertical className="mr-2 h-4 w-4 text-gray-400" />
+          {status === "ongoing" && (
+            <LuGraduationCap className="h-4 w-4 text-green-600" />
+          )}
+          {status === "potential" && (
+            <LuUser className="h-4 w-4 text-orange-600" />
+          )}
+          {status === "selected" && (
+            <LuUserCheck className="h-4 w-4 text-purple-600" />
+          )}
           <span className="ml-2">
             {teacher.teacher.lastname} {teacher.teacher.firstname}
           </span>
@@ -124,19 +137,7 @@ export function DraggableTeacher({
           className="rounded-full p-1 text-red-600 hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
           title="Supprimer cette relation"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
+          <LuTrash2 className="h-4 w-4" />
         </button>
       </td>
     </tr>

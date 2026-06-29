@@ -1,4 +1,6 @@
+import { LuCoins, LuTrendingUp } from "react-icons/lu";
 import type { WorkloadStats } from "../types";
+import { CoverageBar } from "~/components";
 
 interface WorkloadBreakdownProps {
   stats: WorkloadStats;
@@ -7,8 +9,9 @@ interface WorkloadBreakdownProps {
 export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-medium text-gray-900">
-        📈 Répartition des Charges
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-900">
+        <LuTrendingUp className="h-5 w-5 text-blue-600" />
+        Répartition des Charges
       </h3>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -31,8 +34,9 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
                 : "Aucun historique"}
             </div>
             {stats.ongoingCost > 0 && (
-              <div className="text-xs font-medium text-green-800">
-                💰 {stats.ongoingCost}€
+              <div className="flex items-center gap-1 text-xs font-medium text-green-800">
+                <LuCoins className="h-3 w-3" />
+                {stats.ongoingCost}€
               </div>
             )}
           </div>
@@ -62,8 +66,9 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
               Base du calcul d&apos;allocation
             </div>
             {stats.selectedCost > 0 && (
-              <div className="text-xs font-medium text-purple-800">
-                💰 {stats.selectedCost}€
+              <div className="flex items-center gap-1 text-xs font-medium text-purple-800">
+                <LuCoins className="h-3 w-3" />
+                {stats.selectedCost}€
               </div>
             )}
           </div>
@@ -78,15 +83,8 @@ export function WorkloadBreakdown({ stats }: WorkloadBreakdownProps) {
           </span>
           <span className="text-sm text-gray-500">{stats.coverage}%</span>
         </div>
-        <div className="mt-2 h-3 w-full rounded-full bg-gray-200">
-          <div
-            className={`h-3 rounded-full transition-all duration-300 ${
-              stats.coverage <= 100 ? "bg-green-500" : "bg-red-500"
-            }`}
-            style={{
-              width: `${Math.min(stats.coverage, 100)}%`,
-            }}
-          ></div>
+        <div className="mt-2">
+          <CoverageBar coverage={stats.coverage} />
         </div>
       </div>
     </div>

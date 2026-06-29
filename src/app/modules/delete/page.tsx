@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "~/contexts/AuthContext";
 import { api } from "~/trpc/react";
+import { LuTrash2 } from "react-icons/lu";
 import {
   PromoSelection,
   DeletionWarning,
@@ -131,8 +132,9 @@ export default function DeleteModulesPage() {
         <div className="rounded-lg bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">
-                🗑️ Suppression des Modules
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                <LuTrash2 className="h-6 w-6 text-red-600" />
+                Suppression des Modules
               </h1>
               <div className="flex space-x-3">
                 <button

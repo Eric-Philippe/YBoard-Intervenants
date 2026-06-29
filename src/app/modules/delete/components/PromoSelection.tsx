@@ -1,3 +1,4 @@
+import { LuClipboardList } from "react-icons/lu";
 import type { Promo } from "../types";
 
 interface PromoSelectionProps {
@@ -13,8 +14,9 @@ export function PromoSelection({
 }: PromoSelectionProps) {
   return (
     <div className="mb-8">
-      <h2 className="mb-4 text-xl font-semibold text-gray-800">
-        📋 Sélectionnez une Promo
+      <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-800">
+        <LuClipboardList className="h-5 w-5 text-red-600" />
+        Sélectionnez une Promo
       </h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {promos.map((promo) => (

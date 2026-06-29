@@ -1,3 +1,4 @@
+import { LuBookOpen, LuCheck } from "react-icons/lu";
 import type { DeletionStats } from "../types";
 
 interface SuccessModalProps {
@@ -26,15 +27,16 @@ export function SuccessModal({ deletionResult, onClose }: SuccessModalProps) {
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium text-gray-900">
-            ✅ Suppression réussie
+            Suppression réussie
           </h3>
           <div className="mt-2 px-7 py-3">
             <p className="mb-3 text-sm text-gray-700">
               Le module a été supprimé avec succès :
             </p>
             <div className="rounded-md bg-green-50 p-3">
-              <p className="font-semibold text-green-900">
-                📚 {deletionResult.module}
+              <p className="flex items-center justify-center gap-2 font-semibold text-green-900">
+                <LuBookOpen className="h-4 w-4" />
+                {deletionResult.module}
               </p>
               <p className="mt-2 text-sm text-green-700">
                 • {deletionResult.promoModulesCount} association(s) supprimée(s)
@@ -45,9 +47,10 @@ export function SuccessModal({ deletionResult, onClose }: SuccessModalProps) {
           <div className="items-center px-4 py-3">
             <button
               onClick={onClose}
-              className="w-full rounded-md bg-green-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-green-700"
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-green-700"
             >
-              ✓ OK
+              <LuCheck className="h-4 w-4" />
+              OK
             </button>
           </div>
         </div>

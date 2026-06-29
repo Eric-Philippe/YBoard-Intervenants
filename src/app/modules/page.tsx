@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "~/contexts/AuthContext";
 import { api } from "~/trpc/react";
 import { useForm } from "@mantine/form";
+import { CoverageBar, RelationsHoverPreview } from "~/components";
+import {
+  LuBookOpen,
+  LuCheck,
+  LuClipboardList,
+  LuLayers,
+  LuLayoutGrid,
+  LuPencil,
+  LuPlus,
+  LuSearch,
+  LuSearchX,
+  LuTrash2,
+  LuX,
+} from "react-icons/lu";
+import { getWorkloadStatusColor, getWorkloadStatusText } from "~/lib/utils";
 
 // Define interfaces for module data from API
 interface Promo {
@@ -31,12 +46,15 @@ interface PromoModule {
     name: string;
   };
   ongoing?: Array<{
+    workload: number;
     teacher: { id: string; lastname: string; firstname: string };
   }>;
   potential?: Array<{
+    workload: number;
     teacher: { id: string; lastname: string; firstname: string };
   }>;
   selected?: Array<{
+    workload: number;
     teacher: { id: string; lastname: string; firstname: string };
   }>;
 }
@@ -242,6 +260,16 @@ export default function ModulesPage() {
     return ongoing + potential + selected;
   };
 
+  // Coverage is based on "selected" teachers only, mirroring the details panel logic
+  const getCoverage = (promoModule: PromoModule): number => {
+    const selectedTotal =
+      promoModule.selected?.reduce((total, rel) => total + rel.workload, 0) ??
+      0;
+    return promoModule.workload > 0
+      ? Math.round((selectedTotal / promoModule.workload) * 10000) / 100
+      : 0;
+  };
+
   // Function to calculate total workload for a promo
   const calculatePromoTotalWorkload = (promo: Promo): number => {
     return (
@@ -301,15 +329,17 @@ export default function ModulesPage() {
         <div className="rounded-lg bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <div className="mb-6 flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">
-                📚 Gestion des Modules
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                <LuLayoutGrid className="h-6 w-6 text-blue-600" />
+                Gestion des Modules
               </h1>
               <div className="flex space-x-3">
                 <button
                   onClick={() => router.push("/modules/delete")}
-                  className="rounded-md bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+                  className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
                 >
-                  🗑️ Supprimer des Modules
+                  <LuTrash2 className="h-4 w-4" />
+                  Supprimer des Modules
                 </button>
                 <button
                   onClick={() => router.push("/")}
@@ -322,8 +352,9 @@ export default function ModulesPage() {
 
             {/* Promo Selection */}
             <div className="mb-8">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                📋 Sélectionnez une Promo
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-800">
+                <LuClipboardList className="h-5 w-5 text-blue-600" />
+                Sélectionnez une Promo
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {promos.map((promo) => {
@@ -371,8 +402,9 @@ export default function ModulesPage() {
               <div>
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      📖 Modules de {selectedPromo.level} -{" "}
+                    <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-800">
+                      <LuBookOpen className="h-5 w-5 text-blue-600" />
+                      Modules de {selectedPromo.level} -{" "}
                       {selectedPromo.specialty}
                     </h2>
                     {modules.length > 0 && (
@@ -402,9 +434,10 @@ export default function ModulesPage() {
                       createForm.setFieldValue("promoId", selectedPromo.id);
                       setCreateModal(true);
                     }}
-                    className="rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
+                    className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
                   >
-                    ➕ Créer un Module
+                    <LuPlus className="h-4 w-4" />
+                    Créer un Module
                   </button>
                 </div>
 
@@ -420,38 +453,14 @@ export default function ModulesPage() {
                         className="w-full rounded-md border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-blue-500"
                       />
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                          />
-                        </svg>
+                        <LuSearch className="h-5 w-5 text-gray-400" />
                       </div>
                       {searchTerm && (
                         <button
                           onClick={() => setSearchTerm("")}
                           className="absolute inset-y-0 right-0 flex items-center pr-3"
                         >
-                          <svg
-                            className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
+                          <LuX className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                         </button>
                       )}
                     </div>
@@ -465,19 +474,7 @@ export default function ModulesPage() {
                 ) : modules.length === 0 ? (
                   <div className="py-12 text-center">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                      <svg
-                        className="h-6 w-6 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                        />
-                      </svg>
+                      <LuLayers className="h-6 w-6 text-gray-400" />
                     </div>
                     <h3 className="mb-2 text-sm font-medium text-gray-900">
                       Aucun module trouvé
@@ -490,19 +487,7 @@ export default function ModulesPage() {
                 ) : filteredAndSortedModules.length === 0 ? (
                   <div className="py-12 text-center">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                      <svg
-                        className="h-6 w-6 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
+                      <LuSearchX className="h-6 w-6 text-gray-400" />
                     </div>
                     <h3 className="mb-2 text-sm font-medium text-gray-900">
                       Aucun module trouvé pour &quot;{searchTerm}&quot;
@@ -550,6 +535,9 @@ export default function ModulesPage() {
                             </button>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                            Couverture
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                             Relations enseignants
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
@@ -558,51 +546,81 @@ export default function ModulesPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {filteredAndSortedModules.map((promoModule) => (
-                          <tr key={promoModule.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                              <button
-                                onClick={() => {
-                                  router.push(
-                                    `/modules/details?promoId=${promoModule.promo.id}&moduleId=${promoModule.id}`,
-                                  );
-                                }}
-                                className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
-                              >
-                                🔍 {promoModule.module.name}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                {promoModule.workload}h
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                {getRelationsCount(promoModule)} relation(s)
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
-                              <div className="flex space-x-2">
+                        {filteredAndSortedModules.map((promoModule) => {
+                          const coverage = getCoverage(promoModule);
+                          return (
+                            <tr
+                              key={promoModule.id}
+                              className="hover:bg-gray-50"
+                            >
+                              <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                                 <button
-                                  onClick={() => handleEditClick(promoModule)}
-                                  className="text-blue-600 transition-colors hover:text-blue-900"
-                                  disabled={loading}
+                                  onClick={() => {
+                                    router.push(
+                                      `/modules/details?promoId=${promoModule.promo.id}&moduleId=${promoModule.id}`,
+                                    );
+                                  }}
+                                  className="flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
                                 >
-                                  ✏️ Modifier
+                                  <LuBookOpen className="h-4 w-4 text-gray-400" />
+                                  {promoModule.module.name}
                                 </button>
-                                <span className="text-gray-300">|</span>
-                                <button
-                                  onClick={() => router.push(`/modules/delete`)}
-                                  className="text-red-600 transition-colors hover:text-red-900"
-                                  disabled={loading}
+                              </td>
+                              <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                                <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                                  {promoModule.workload}h
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20">
+                                    <CoverageBar coverage={coverage} size="sm" />
+                                  </div>
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${getWorkloadStatusColor(coverage)}`}
+                                    title={getWorkloadStatusText(coverage)}
+                                  >
+                                    {coverage}%
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                                <RelationsHoverPreview
+                                  ongoing={promoModule.ongoing}
+                                  potential={promoModule.potential}
+                                  selected={promoModule.selected}
                                 >
-                                  🗑️ Supprimer
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                  <span className="inline-flex cursor-default items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    {getRelationsCount(promoModule)} relation(s)
+                                  </span>
+                                </RelationsHoverPreview>
+                              </td>
+                              <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                                <div className="flex items-center space-x-3">
+                                  <button
+                                    onClick={() => handleEditClick(promoModule)}
+                                    className="flex items-center gap-1 text-blue-600 transition-colors hover:text-blue-900"
+                                    disabled={loading}
+                                  >
+                                    <LuPencil className="h-4 w-4" />
+                                    Modifier
+                                  </button>
+                                  <span className="text-gray-300">|</span>
+                                  <button
+                                    onClick={() =>
+                                      router.push(`/modules/delete`)
+                                    }
+                                    className="flex items-center gap-1 text-red-600 transition-colors hover:text-red-900"
+                                    disabled={loading}
+                                  >
+                                    <LuTrash2 className="h-4 w-4" />
+                                    Supprimer
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -619,8 +637,9 @@ export default function ModulesPage() {
           <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
-                  ➕ Créer un nouveau module
+                <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900">
+                  <LuPlus className="h-5 w-5 text-green-600" />
+                  Créer un nouveau module
                 </h3>
                 <button
                   onClick={() => {
@@ -680,9 +699,10 @@ export default function ModulesPage() {
                   </label>
                   {selectedPromo &&
                     createForm.values.promoId === selectedPromo.id && (
-                      <div className="mb-2 rounded-md bg-blue-50 p-2">
+                      <div className="mb-2 flex items-center gap-2 rounded-md bg-blue-50 p-2">
+                        <LuCheck className="h-4 w-4 text-blue-700" />
                         <p className="text-sm text-blue-800">
-                          ✓ Promo pré-sélectionnée: {selectedPromo.level} -{" "}
+                          Promo pré-sélectionnée: {selectedPromo.level} -{" "}
                           {selectedPromo.specialty}
                         </p>
                       </div>
@@ -744,10 +764,11 @@ export default function ModulesPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     disabled={loading}
                   >
-                    {loading ? "Création..." : "➕ Créer"}
+                    {!loading && <LuPlus className="h-4 w-4" />}
+                    {loading ? "Création..." : "Créer"}
                   </button>
                 </div>
               </form>
@@ -762,8 +783,9 @@ export default function ModulesPage() {
           <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
-                  ✏️ Modifier le module
+                <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900">
+                  <LuPencil className="h-5 w-5 text-blue-600" />
+                  Modifier le module
                 </h3>
                 <button
                   onClick={() => {
@@ -862,10 +884,11 @@ export default function ModulesPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                     disabled={loading}
                   >
-                    {loading ? "Modification..." : "✏️ Modifier"}
+                    {!loading && <LuPencil className="h-4 w-4" />}
+                    {loading ? "Modification..." : "Modifier"}
                   </button>
                 </div>
               </form>

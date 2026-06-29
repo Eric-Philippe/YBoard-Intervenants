@@ -1,3 +1,4 @@
+import { LuCoins } from "react-icons/lu";
 import type { PromoModule, WorkloadStats } from "../types";
 import { getWorkloadStatusColor, getWorkloadStatusText } from "../utils";
 
@@ -100,8 +101,9 @@ export function ModuleDetailsHeader({
         </div>
 
         <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            💰 Informations Financières
+          <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900">
+            <LuCoins className="h-4 w-4 text-amber-600" />
+            Informations Financières
           </h3>
           <dl className="mt-3 space-y-2">
             <div>
