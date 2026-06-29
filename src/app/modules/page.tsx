@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "~/contexts/AuthContext";
 import { api } from "~/trpc/react";
 import { useForm } from "@mantine/form";
-import { CoverageBar, RelationsHoverPreview } from "~/components";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  CoverageBar,
+  RelationsHoverPreview,
+  StepIndicator,
+} from "~/components";
 import {
   LuBookOpen,
   LuCheck,
@@ -21,43 +26,18 @@ import {
 } from "react-icons/lu";
 import { getWorkloadStatusColor, getWorkloadStatusText } from "~/lib/utils";
 
-// Define interfaces for module data from API
-interface Promo {
-  id: string;
-  level: string;
-  specialty: string;
-  promoModules?: Array<{
-    workload: number;
-    module: {
-      id: string;
-      name: string;
-    };
-  }>;
-}
-
-interface PromoModule {
-  id: string;
-  moduleId: string;
-  promoId: string;
-  workload: number;
-  promo: Promo;
-  module: {
-    id: string;
-    name: string;
-  };
-  ongoing?: Array<{
-    workload: number;
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-  potential?: Array<{
-    workload: number;
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-  selected?: Array<{
-    workload: number;
-    teacher: { id: string; lastname: string; firstname: string };
-  }>;
-}
+// Reuse the data model and building blocks of the (now merged) module details panel
+import type { Promo, PromoModule, TeacherRelation } from "./details/types";
+import {
+  calculateWorkloadStats,
+  transformPromoModule,
+} from "./details/utils";
+import {
+  ModuleDetailsHeader,
+  WorkloadBreakdown,
+  TeacherManagement,
+  SummaryReport,
+} from "./details/components";
 
 interface ModuleFormData {
   name: string;
@@ -65,20 +45,26 @@ interface ModuleFormData {
   workload: string; // Use string for form input
 }
 
-export default function ModulesPage() {
+function ModulesPageContent() {
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [selectedModule, setSelectedModule] = useState<PromoModule | null>(
     null,
   );
+  const [activeTeacher, setActiveTeacher] = useState<TeacherRelation | null>(
+    null,
+  );
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<PromoModule | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<"name" | "workload" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // tRPC hooks
   const utils = api.useUtils();
@@ -88,7 +74,7 @@ export default function ModulesPage() {
     { enabled: !!selectedPromo },
   );
 
-  // Mutations
+  // Mutations - module CRUD
   const createModuleMutation = api.modules.create.useMutation({
     onSuccess: () => {
       void utils.modules.invalidate();
@@ -123,7 +109,7 @@ export default function ModulesPage() {
       void utils.modules.invalidate();
       void utils.promoModules.invalidate();
       setEditModal(false);
-      setSelectedModule(null);
+      setEditTarget(null);
       editForm.reset();
       setLoading(false);
     },
@@ -132,6 +118,27 @@ export default function ModulesPage() {
       setLoading(false);
       alert(`Erreur lors de la modification: ${error.message}`);
     },
+  });
+
+  // Mutations - teacher relations (drag and drop in the details panel)
+  const createPotentialMutation = api.relations.createPotential.useMutation({
+    onSuccess: () => void utils.modules.getByPromo.invalidate(),
+  });
+
+  const createSelectedMutation = api.relations.createSelected.useMutation({
+    onSuccess: () => void utils.modules.getByPromo.invalidate(),
+  });
+
+  const deletePotentialMutation = api.relations.deletePotential.useMutation({
+    onSuccess: () => void utils.modules.getByPromo.invalidate(),
+  });
+
+  const deleteSelectedMutation = api.relations.deleteSelected.useMutation({
+    onSuccess: () => void utils.modules.getByPromo.invalidate(),
+  });
+
+  const deleteOngoingMutation = api.relations.deleteOngoing.useMutation({
+    onSuccess: () => void utils.modules.getByPromo.invalidate(),
   });
 
   // Forms
@@ -171,6 +178,205 @@ export default function ModulesPage() {
     },
   });
 
+  // Deep-link support: /modules?promoId=...&moduleId=...
+  useEffect(() => {
+    const promoId = searchParams.get("promoId");
+    const moduleId = searchParams.get("moduleId");
+
+    if (promoId && promosQuery.data && !selectedPromo) {
+      const promo = promosQuery.data.find((p) => p.id === promoId);
+      if (promo) {
+        setSelectedPromo(promo);
+      }
+    }
+
+    if (moduleId && modulesQuery.data && selectedPromo && !selectedModule) {
+      const transformedModules = modulesQuery.data.map(transformPromoModule);
+      const foundModule = transformedModules.find((m) => m.id === moduleId);
+      if (foundModule) {
+        setSelectedModule(foundModule);
+      }
+    }
+  }, [
+    searchParams,
+    promosQuery.data,
+    modulesQuery.data,
+    selectedPromo,
+    selectedModule,
+  ]);
+
+  // Keep the detail panel in sync whenever the underlying data is refetched
+  // (relation drag-and-drop, module edit, etc.)
+  useEffect(() => {
+    if (!selectedModule || !modulesQuery.data) return;
+    const transformedModules = modulesQuery.data.map(transformPromoModule);
+    const updated = transformedModules.find((m) => m.id === selectedModule.id);
+    setSelectedModule(updated ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modulesQuery.data]);
+
+  // Smoothly scroll down to the unlocked details panel once a module is selected
+  useEffect(() => {
+    if (selectedModule && detailsRef.current) {
+      detailsRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [selectedModule]);
+
+  // Drag and drop handlers for the teacher management section
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const teacherData = active.data.current as {
+      teacher: TeacherRelation;
+      status: "ongoing" | "potential" | "selected";
+    };
+    setActiveTeacher(teacherData.teacher);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTeacher(null);
+
+    if (!over || !selectedModule) return;
+
+    const sourceData = active.data.current as {
+      teacher: TeacherRelation;
+      status: "ongoing" | "potential" | "selected";
+    };
+    const targetStatus = over.id as "ongoing" | "potential" | "selected";
+    const sourceStatus = sourceData.status;
+
+    if (sourceStatus === targetStatus) return;
+
+    if (sourceStatus === "potential" && targetStatus === "ongoing") {
+      alert("Impossible de déplacer un enseignant de Potential vers Ongoing");
+      return;
+    }
+
+    if (sourceStatus === "selected" && targetStatus === "ongoing") {
+      alert("Impossible de déplacer un enseignant de Selected vers Ongoing");
+      return;
+    }
+
+    const teacher = sourceData.teacher;
+
+    const getEffectiveRate = (teacherRelation: TeacherRelation): number => {
+      if (teacherRelation.rate !== null && teacherRelation.rate !== undefined) {
+        return Number(teacherRelation.rate);
+      }
+      if (
+        teacherRelation.teacher?.rate !== null &&
+        teacherRelation.teacher?.rate !== undefined
+      ) {
+        const rate = teacherRelation.teacher.rate;
+        if (typeof rate === "number") return rate;
+        if (typeof rate === "string") {
+          const parsed = parseFloat(rate);
+          return isNaN(parsed) ? 1 : parsed;
+        }
+        if (rate && typeof rate === "object" && "toNumber" in rate) {
+          try {
+            return (rate as { toNumber: () => number }).toNumber();
+          } catch {
+            return 1;
+          }
+        }
+      }
+      return 1;
+    };
+
+    const effectiveRate = getEffectiveRate(teacher);
+
+    try {
+      if (sourceStatus === "ongoing") {
+        if (targetStatus === "potential") {
+          await createPotentialMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+            workload: teacher.workload,
+            rate: effectiveRate,
+          });
+        } else if (targetStatus === "selected") {
+          await createSelectedMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+            workload: teacher.workload,
+            rate: effectiveRate,
+          });
+        }
+      } else {
+        if (sourceStatus === "potential") {
+          await deletePotentialMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+          });
+        } else if (sourceStatus === "selected") {
+          await deleteSelectedMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+          });
+        }
+
+        if (targetStatus === "potential") {
+          await createPotentialMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+            workload: teacher.workload,
+            rate: effectiveRate,
+          });
+        } else if (targetStatus === "selected") {
+          await createSelectedMutation.mutateAsync({
+            teacherId: teacher.teacherId,
+            promoModulesId: selectedModule.id,
+            workload: teacher.workload,
+            rate: effectiveRate,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error during drag and drop operation:", error);
+      alert("Erreur lors du déplacement de l'enseignant");
+    }
+  };
+
+  const handleDeleteOngoing = async (
+    teacherId: string,
+    promoModulesId: string,
+  ) => {
+    try {
+      await deleteOngoingMutation.mutateAsync({ teacherId, promoModulesId });
+    } catch (error) {
+      console.error("Error deleting ongoing relation:", error);
+      alert("Erreur lors de la suppression de la relation ongoing");
+    }
+  };
+
+  const handleDeletePotential = async (
+    teacherId: string,
+    promoModulesId: string,
+  ) => {
+    try {
+      await deletePotentialMutation.mutateAsync({ teacherId, promoModulesId });
+    } catch (error) {
+      console.error("Error deleting potential relation:", error);
+      alert("Erreur lors de la suppression de la relation potential");
+    }
+  };
+
+  const handleDeleteSelected = async (
+    teacherId: string,
+    promoModulesId: string,
+  ) => {
+    try {
+      await deleteSelectedMutation.mutateAsync({ teacherId, promoModulesId });
+    } catch (error) {
+      console.error("Error deleting selected relation:", error);
+      alert("Erreur lors de la suppression de la relation selected");
+    }
+  };
+
   // Authentication check
   if (authLoading) {
     return (
@@ -188,23 +394,28 @@ export default function ModulesPage() {
   // Event handlers
   const handlePromoSelect = (promo: Promo) => {
     setSelectedPromo(promo);
-    setSearchTerm(""); // Reset search when changing promo
-    setSortField(null); // Reset sort when changing promo
+    setSelectedModule(null); // Reset module/detail selection when promo changes
+    setSearchTerm("");
+    setSortField(null);
+  };
+
+  const handleModuleRowClick = (module: PromoModule) => {
+    setSelectedModule((current) =>
+      current?.id === module.id ? null : module,
+    );
   };
 
   const handleSort = (field: "name" | "workload") => {
     if (sortField === field) {
-      // Toggle direction if same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // Set new field with ascending order
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
   const handleEditClick = (module: PromoModule) => {
-    setSelectedModule(module);
+    setEditTarget(module);
     editForm.setValues({
       name: module.module.name,
       workload: String(module.workload),
@@ -233,18 +444,16 @@ export default function ModulesPage() {
     name: string;
     workload: string;
   }) => {
-    if (!selectedModule) return;
+    if (!editTarget) return;
     setLoading(true);
     try {
-      // Update module name
       await updateModuleMutation.mutateAsync({
-        id: selectedModule.module.id,
+        id: editTarget.module.id,
         name: values.name,
       });
 
-      // Update workload
       await updatePromoModuleMutation.mutateAsync({
-        id: selectedModule.id,
+        id: editTarget.id,
         workload: Number(values.workload),
       });
     } catch (error) {
@@ -258,16 +467,6 @@ export default function ModulesPage() {
     const potential = promoModule.potential?.length ?? 0;
     const selected = promoModule.selected?.length ?? 0;
     return ongoing + potential + selected;
-  };
-
-  // Coverage is based on "selected" teachers only, mirroring the details panel logic
-  const getCoverage = (promoModule: PromoModule): number => {
-    const selectedTotal =
-      promoModule.selected?.reduce((total, rel) => total + rel.workload, 0) ??
-      0;
-    return promoModule.workload > 0
-      ? Math.round((selectedTotal / promoModule.workload) * 10000) / 100
-      : 0;
   };
 
   // Function to calculate total workload for a promo
@@ -297,7 +496,7 @@ export default function ModulesPage() {
   }
 
   const promos = promosQuery.data ?? [];
-  const modules = modulesQuery.data ?? [];
+  const modules = (modulesQuery.data ?? []).map(transformPromoModule);
 
   // Filter and sort modules
   const filteredAndSortedModules = modules
@@ -322,6 +521,8 @@ export default function ModulesPage() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
+
+  const currentStep = selectedModule ? 2 : selectedPromo ? 1 : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -349,6 +550,16 @@ export default function ModulesPage() {
                 </button>
               </div>
             </div>
+
+            {/* Navigation Stepper */}
+            <StepIndicator
+              steps={[
+                { label: "Promo" },
+                { label: "Module" },
+                { label: "Détails" },
+              ]}
+              currentStep={currentStep}
+            />
 
             {/* Promo Selection */}
             <div className="mb-8">
@@ -547,20 +758,23 @@ export default function ModulesPage() {
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
                         {filteredAndSortedModules.map((promoModule) => {
-                          const coverage = getCoverage(promoModule);
+                          const stats = calculateWorkloadStats(promoModule);
+                          const isActive = selectedModule?.id === promoModule.id;
                           return (
                             <tr
                               key={promoModule.id}
-                              className="hover:bg-gray-50"
+                              className={
+                                isActive ? "bg-blue-50" : "hover:bg-gray-50"
+                              }
                             >
                               <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                                 <button
-                                  onClick={() => {
-                                    router.push(
-                                      `/modules/details?promoId=${promoModule.promo.id}&moduleId=${promoModule.id}`,
-                                    );
-                                  }}
-                                  className="flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
+                                  onClick={() =>
+                                    handleModuleRowClick(promoModule)
+                                  }
+                                  className={`flex cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline ${
+                                    isActive ? "text-blue-700" : ""
+                                  }`}
                                 >
                                   <LuBookOpen className="h-4 w-4 text-gray-400" />
                                   {promoModule.module.name}
@@ -574,13 +788,18 @@ export default function ModulesPage() {
                               <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                                 <div className="flex items-center gap-2">
                                   <div className="w-20">
-                                    <CoverageBar coverage={coverage} size="sm" />
+                                    <CoverageBar
+                                      coverage={stats.coverage}
+                                      size="sm"
+                                    />
                                   </div>
                                   <span
-                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${getWorkloadStatusColor(coverage)}`}
-                                    title={getWorkloadStatusText(coverage)}
+                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${getWorkloadStatusColor(stats.coverage)}`}
+                                    title={getWorkloadStatusText(
+                                      stats.coverage,
+                                    )}
                                   >
-                                    {coverage}%
+                                    {stats.coverage}%
                                   </span>
                                 </div>
                               </td>
@@ -627,6 +846,47 @@ export default function ModulesPage() {
                 )}
               </div>
             )}
+
+            {/* Module Details (inline, unlocked once a module row is selected above) */}
+            {selectedModule && (
+              <div ref={detailsRef} className="mt-8 scroll-mt-6">
+                <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-gray-800">
+                  <LuLayoutGrid className="h-5 w-5 text-purple-600" />
+                  Détails du Module: {selectedModule.module.name}
+                </h2>
+
+                {(() => {
+                  const stats = calculateWorkloadStats(selectedModule);
+
+                  return (
+                    <div className="space-y-6">
+                      <ModuleDetailsHeader
+                        selectedModule={selectedModule}
+                        stats={stats}
+                      />
+
+                      <WorkloadBreakdown stats={stats} />
+
+                      <TeacherManagement
+                        selectedModule={selectedModule}
+                        stats={stats}
+                        activeTeacher={activeTeacher}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDeleteOngoing={handleDeleteOngoing}
+                        onDeletePotential={handleDeletePotential}
+                        onDeleteSelected={handleDeleteSelected}
+                      />
+
+                      <SummaryReport
+                        selectedModule={selectedModule}
+                        stats={stats}
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -648,19 +908,7 @@ export default function ModulesPage() {
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <LuX className="h-6 w-6" />
                 </button>
               </div>
 
@@ -778,7 +1026,7 @@ export default function ModulesPage() {
       )}
 
       {/* Edit Module Modal */}
-      {editModal && selectedModule && (
+      {editModal && editTarget && (
         <div className="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
           <div className="relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg">
             <div className="mt-3">
@@ -790,33 +1038,21 @@ export default function ModulesPage() {
                 <button
                   onClick={() => {
                     setEditModal(false);
-                    setSelectedModule(null);
+                    setEditTarget(null);
                     editForm.reset();
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <LuX className="h-6 w-6" />
                 </button>
               </div>
 
               <div className="mb-4 rounded-md bg-blue-50 p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Module:</strong> {selectedModule.module.name}
+                  <strong>Module:</strong> {editTarget.module.name}
                   <br />
-                  <strong>Promo:</strong> {selectedModule.promo.level} -{" "}
-                  {selectedModule.promo.specialty}
+                  <strong>Promo:</strong> {editTarget.promo.level} -{" "}
+                  {editTarget.promo.specialty}
                 </p>
               </div>
 
@@ -874,7 +1110,7 @@ export default function ModulesPage() {
                     type="button"
                     onClick={() => {
                       setEditModal(false);
-                      setSelectedModule(null);
+                      setEditTarget(null);
                       editForm.reset();
                     }}
                     className="flex-1 rounded-md bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
@@ -897,5 +1133,19 @@ export default function ModulesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ModulesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-lg">Chargement...</div>
+        </div>
+      }
+    >
+      <ModulesPageContent />
+    </Suspense>
   );
 }

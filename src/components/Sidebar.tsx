@@ -20,7 +20,6 @@ import {
   IconLogout,
   IconHome,
   IconTrash,
-  IconEye,
   IconSettings,
   IconChevronDown,
   IconUser,
@@ -287,12 +286,6 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 icon={<IconSettings size={16} />}
                 label="Gérer les Modules"
                 onClick={() => router.push("/modules")}
-              />
-              <SubMenuItem
-                icon={<IconEye size={16} />}
-                label="Détails des Modules"
-                onClick={() => router.push("/modules/details")}
-                color="blue"
               />
               <SubMenuItem
                 icon={<IconTrash size={16} />}

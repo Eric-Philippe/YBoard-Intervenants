@@ -310,10 +310,10 @@ export const getWorkloadStatusColor = (coverage: number): string => {
  * @returns Descriptive text for workload status
  */
 export const getWorkloadStatusText = (coverage: number): string => {
-  if (coverage < 50) return "Sous-alloué (Selected)";
-  if (coverage < 80) return "Partiellement alloué (Selected)";
-  if (coverage <= 100) return "Correctement alloué (Selected)";
-  return "Sur-alloué (Selected)";
+  if (coverage < 50) return "Sous-alloué";
+  if (coverage < 80) return "Partiellement alloué";
+  if (coverage <= 100) return "Correctement alloué";
+  return "Sur-alloué";
 };
 
 /**

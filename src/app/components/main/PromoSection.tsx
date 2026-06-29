@@ -83,12 +83,12 @@ export function PromoSection({
                     <button
                       onClick={() => {
                         router.push(
-                          `/modules/details?promoId=${item.promoModule.promo.id}&moduleId=${item.promoModule.id}`,
+                          `/modules?promoId=${item.promoModule.promo.id}&moduleId=${item.promoModule.id}`,
                         );
                       }}
                       className="cursor-pointer border-none bg-transparent p-0 text-left font-medium transition-colors hover:text-blue-600 hover:underline"
                     >
-                      🔍 {item.promoModule.module.name}
+                      {item.promoModule.module.name}
                     </button>
                   </Table.Td>
                   <Table.Td>
