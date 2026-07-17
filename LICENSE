@@ -1,0 +1,88 @@
+Licence propriétaire, code source visible (consultation uniquement)
+Proprietary License, Source-Available (View-Only)
+
+Copyright (c) 2026 Eric PHILIPPE. Tous droits réservés / All rights reserved.
+
+--------------------------------------------------------------------------------
+VERSION FRANÇAISE (fait foi)
+--------------------------------------------------------------------------------
+
+Ce logiciel et l'ensemble de son code source (ci-après « le Logiciel ») sont la
+propriété exclusive d'Eric PHILIPPE. Le Logiciel n'est PAS un logiciel libre ni
+open source. Sa mise à disposition publique a pour seule finalité la consultation
+et la transparence.
+
+1. AUTORISATION ACCORDÉE
+
+   Toute personne est autorisée à consulter, lire et étudier le code source du
+   Logiciel, à des fins strictement personnelles d'information, d'évaluation ou
+   de référence.
+
+2. INTERDICTIONS
+
+   En dehors de l'autorisation ci-dessus, aucun droit n'est concédé. Sont
+   notamment interdits, en tout ou partie, sous quelque forme et par quelque
+   moyen que ce soit, sans l'accord écrit préalable de l'auteur :
+
+   a. la copie, la reproduction ou le stockage du code en dehors de sa simple
+      consultation ;
+   b. la modification, l'adaptation, la traduction ou la création d'œuvres
+      dérivées ;
+   c. la redistribution, la publication, la mise à disposition ou le partage,
+      gratuit ou onéreux ;
+   d. la réutilisation de tout ou partie du code, des idées, de l'architecture
+      ou des composants dans un autre projet ou produit ;
+   e. la compilation, l'exécution ou le déploiement du Logiciel à des fins
+      autres que son évaluation ;
+   f. tout usage commercial ou non commercial autre que la consultation ;
+   g. la suppression ou l'altération des présentes mentions de licence et de
+      droit d'auteur.
+
+3. AUCUNE CONCESSION IMPLICITE
+
+   Aucune licence, aucun droit de propriété intellectuelle, marque ou brevet
+   n'est concédé de manière implicite. Tout droit d'utilisation, d'exploitation
+   ou de cession doit faire l'objet d'un accord écrit distinct avec l'auteur.
+
+4. ABSENCE DE GARANTIE
+
+   Le Logiciel est fourni « en l'état », sans garantie d'aucune sorte, expresse
+   ou implicite. L'auteur ne saurait être tenu responsable de tout dommage
+   résultant de la consultation ou de toute utilisation du Logiciel.
+
+5. CONTACT
+
+   Pour toute demande d'autorisation, de licence d'utilisation ou de cession de
+   droits : Eric PHILIPPE (https://github.com/Eric-Philippe).
+
+--------------------------------------------------------------------------------
+ENGLISH VERSION (for convenience; the French version prevails)
+--------------------------------------------------------------------------------
+
+This software and all of its source code (the "Software") are the exclusive
+property of Eric PHILIPPE. The Software is NOT free or open source software. It
+is made publicly visible for the sole purpose of consultation and transparency.
+
+1. GRANT: Any person may view, read and study the source code of the Software
+   for strictly personal purposes of information, evaluation or reference.
+
+2. RESTRICTIONS: Except as stated above, no rights are granted. Without the
+   prior written consent of the author, it is prohibited, in whole or in part
+   and by any means, to: copy, reproduce or store the code beyond mere viewing;
+   modify, adapt, translate or create derivative works; redistribute, publish,
+   share or make available, whether free of charge or not; reuse any part of the
+   code, ideas, architecture or components in another project or product;
+   compile, run or deploy the Software for any purpose other than its
+   evaluation; make any commercial or non-commercial use other than viewing; or
+   remove or alter these license and copyright notices.
+
+3. NO IMPLIED GRANT: No license, intellectual property right, trademark or
+   patent is granted by implication. Any right of use, exploitation or transfer
+   requires a separate written agreement with the author.
+
+4. NO WARRANTY: The Software is provided "as is", without warranty of any kind.
+   The author shall not be liable for any damages arising from the consultation
+   or any use of the Software.
+
+5. CONTACT: For any authorization, usage license or transfer of rights, contact
+   Eric PHILIPPE (https://github.com/Eric-Philippe).

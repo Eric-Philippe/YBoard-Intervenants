@@ -1,0 +1,42 @@
+version: "3.8"
+
+# Secrets are read from the environment (or a local, git-ignored .env file next
+# to this compose file). No secret is stored in this committed file. Compose
+# fails to start if a required value is missing.
+#
+# Example .env (do NOT commit):
+#   POSTGRES_PASSWORD=<long-random-password>
+#   JWT_SECRET=<long-random-secret>
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/yboard
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - NODE_ENV=production
+    volumes:
+      # Volume persistant pour stocker les CV uploadés
+      - cv_storage:/app/uploads/cv
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=yboard
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Le port n'est plus exposé sur l'hôte : la base n'est joignable que par le
+    # service "app" sur le réseau interne de Compose. Décommenter uniquement pour
+    # un accès local ponctuel (ex. Prisma Studio).
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+volumes:
+  postgres_data:
+  cv_storage:

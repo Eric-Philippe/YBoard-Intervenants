@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Teacher" ALTER COLUMN "diploma" SET DATA TYPE VARCHAR(100);

@@ -1,0 +1,232 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Perimeter {
+  id         String  @id @default(uuid())
+  title      String  @db.VarChar(100)
+  slug       String  @unique @db.VarChar(120)
+  origin     String  @db.VarChar(100)
+  color      String  @db.VarChar(20)
+  short_desc String? @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  members           PerimeterMember[]
+  promos            Promos[]
+  modules           Modules[]
+  teacherComments   TeacherComment[]
+  surveySubmissions SurveySubmission[]
+  activeFor         Users[]            @relation("ActivePerimeter")
+
+  @@map("Perimeters")
+}
+
+model PerimeterMember {
+  id          String    @id @default(uuid())
+  perimeterId String    @map("perimeter_id")
+  userId      String    @map("user_id")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  perimeter   Perimeter @relation(fields: [perimeterId], references: [id], onDelete: Cascade)
+  user        Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([perimeterId, userId])
+  @@map("PerimeterMembers")
+}
+
+model TeacherComment {
+  id          String    @id @default(uuid())
+  teacherId   String    @map("Id_Teacher")
+  perimeterId String    @map("perimeter_id")
+  comment     String    @db.Text
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  teacher     Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  perimeter   Perimeter @relation(fields: [perimeterId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, perimeterId])
+  @@map("TeacherComments")
+}
+
+model Promos {
+  id                 String         @id @default(uuid()) @map("Id_Promo")
+  level              String         @db.VarChar(50)
+  specialty          String         @db.VarChar(50)
+  icon               String?        @db.VarChar(50)
+  perimeterId        String         @map("perimeter_id")
+  surveyTitle        String?        @map("survey_title") @db.VarChar(255)
+  surveyIntroduction String?        @map("survey_introduction") @db.Text
+  perimeter          Perimeter      @relation(fields: [perimeterId], references: [id], onDelete: Cascade)
+  promoModules       PromoModules[]
+
+  @@map("Promos")
+}
+
+model Modules {
+  id             String         @id @default(uuid()) @map("Id_Module")
+  name           String         @db.VarChar(255)
+  perimeterId    String         @map("perimeter_id")
+  description    String?        @db.Text
+  periode        String?        @db.VarChar(100)
+  avecMentor     Boolean        @default(false) @map("avec_mentor")
+  nombreHeureTDP Int?           @map("nombre_heure_tdp")
+  nombreHeureFFP Int?           @map("nombre_heure_ffp")
+  perimeter      Perimeter      @relation(fields: [perimeterId], references: [id], onDelete: Cascade)
+  promoModules   PromoModules[]
+
+  @@map("Modules")
+}
+
+model Teacher {
+  id              String           @id @default(uuid()) @map("Id_Teacher")
+  lastname        String           @db.VarChar(50)
+  firstname       String           @db.VarChar(50)
+  status          String?          @db.VarChar(50)
+  diploma         String?          @db.VarChar(100)
+  rate            Decimal?         @db.Decimal(5, 2)
+  email_perso     String?          @db.VarChar(50)
+  email_ynov      String?          @db.VarChar(50)
+  phone_number    String?          @db.VarChar(20)
+  cv_filename     String?          @db.VarChar(255)
+  cv_uploaded_at  DateTime?        @db.Timestamp(6)
+  ongoing         ongoing[]
+  potential       potential[]
+  selected        selected[]
+  teacherComments TeacherComment[]
+
+  @@map("Teacher")
+}
+
+model PromoModules {
+  id              String           @id @default(uuid()) @map("Id_PromoModules")
+  moduleId        String           @map("Id_Module")
+  promoId         String           @map("Id_Promo")
+  workload        Int
+  module          Modules          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  promo           Promos           @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  ongoing         ongoing[]
+  potential       potential[]
+  selected        selected[]
+  surveyResponses SurveyResponse[]
+
+  @@unique([moduleId, promoId])
+  @@map("PromoModules")
+}
+
+model ongoing {
+  teacherId      String       @map("Id_Teacher")
+  promoModulesId String       @map("Id_PromoModules")
+  workload       Int
+  rate           Decimal?     @db.Decimal(5, 2)
+  rateTDP        Decimal?     @db.Decimal(5, 2)
+  rateFFP        Decimal?     @db.Decimal(5, 2)
+  teacher        Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules   PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("ongoing")
+}
+
+model potential {
+  teacherId          String       @map("Id_Teacher")
+  promoModulesId     String       @map("Id_PromoModules")
+  workload           Int
+  rate               Decimal?     @db.Decimal(5, 2)
+  rateTDP            Decimal?     @db.Decimal(5, 2)
+  rateFFP            Decimal?     @db.Decimal(5, 2)
+  decision           Boolean?
+  interview_date     DateTime?    @db.Date
+  interview_comments String?      @db.Text
+  teacher            Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules       PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("potential")
+}
+
+model selected {
+  teacherId      String       @map("Id_Teacher")
+  promoModulesId String       @map("Id_PromoModules")
+  workload       Int
+  rate           Decimal?     @db.Decimal(5, 2)
+  rateTDP        Decimal?     @db.Decimal(5, 2)
+  rateFFP        Decimal?     @db.Decimal(5, 2)
+  teacher        Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  promoModules   PromoModules @relation(fields: [promoModulesId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, promoModulesId])
+  @@map("selected")
+}
+
+model Users {
+  id                String            @id @default(uuid()) @map("Id_Users")
+  firstname         String            @db.VarChar(50)
+  lastname          String            @db.VarChar(50)
+  email             String            @db.VarChar(50)
+  password          String?           @db.VarChar(255)
+  last_connected    DateTime?         @db.Timestamp(6)
+  activePerimeterId String?           @map("active_perimeter_id")
+  activePerimeter   Perimeter?        @relation("ActivePerimeter", fields: [activePerimeterId], references: [id])
+  memberships       PerimeterMember[]
+
+  @@map("Users")
+}
+
+// ─── Sondage (Survey) — généré par périmètre à partir de Promos/Modules ────
+
+model SurveySubmission {
+  id                    String                    @id @default(uuid())
+  createdAt             DateTime                  @default(now()) @map("created_at")
+  perimeterId           String                    @map("perimeter_id")
+  origin                String?                   @db.VarChar(255)
+  nom                   String                    @db.VarChar(255)
+  prenom                String                    @db.VarChar(255)
+  email                 String                    @db.VarChar(255)
+  telephone             String                    @default("") @db.VarChar(50)
+  niveauAcademique      String                    @map("niveau_academique") @db.VarChar(20)
+  niveauAcademiqueAutre String?                   @map("niveau_academique_autre") @db.VarChar(255)
+  intituleDiplome       String                    @map("intitule_diplome") @db.Text
+  anneesExperience      String                    @map("annees_experience") @db.VarChar(20)
+  domainesExercice      String                    @default("") @map("domaines_exercice") @db.Text
+  projetsPersonnels     String                    @default("") @map("projets_personnels") @db.Text
+  lienProfil            String                    @default("") @map("lien_profil") @db.Text
+  remarques             String                    @default("") @db.Text
+  finalChoice           String                    @default("") @map("final_choice") @db.VarChar(50)
+  perimeter             Perimeter                 @relation(fields: [perimeterId], references: [id], onDelete: Cascade)
+  responses             SurveyResponse[]
+  teacherLinks          SurveySubmissionTeacher[]
+
+  @@unique([perimeterId, email])
+  @@map("survey_submissions")
+}
+
+model SurveySubmissionTeacher {
+  id           String           @id @default(uuid())
+  submissionId String           @map("submission_id")
+  teacherId    String           @map("teacher_id")
+  linkedAt     DateTime         @default(now()) @map("linked_at")
+  submission   SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, teacherId])
+  @@map("survey_submission_teachers")
+}
+
+model SurveyResponse {
+  id                  String           @id @default(uuid())
+  submissionId        String           @map("submission_id")
+  promoModulesId      String?          @map("promo_modules_id")
+  moduleLabelSnapshot String?          @map("module_label_snapshot") @db.VarChar(255)
+  response            String           @default("non") @db.VarChar(20)
+  conditionText       String?          @map("condition_text") @db.Text
+  submission          SurveySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  promoModules        PromoModules?    @relation(fields: [promoModulesId], references: [id], onDelete: SetNull)
+
+  @@unique([submissionId, promoModulesId])
+  @@map("survey_responses")
+}

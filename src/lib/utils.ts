@@ -1,0 +1,425 @@
+import type { PromoModule, Teacher, User } from "~/types";
+import type { Decimal } from "@prisma/client/runtime/library";
+
+/**
+ * Date formatting utilities
+ */
+
+/**
+ * Converts Prisma Decimal to number
+ * @param decimal - The Decimal value to convert
+ * @returns Number representation or null
+ */
+export const decimalToNumber = (decimal?: Decimal | null): number | null => {
+  if (!decimal) return null;
+  return decimal.toNumber();
+};
+
+/**
+ * Safely converts Prisma Decimal to number with fallback
+ * @param decimal - The Decimal value to convert
+ * @param fallback - Default value if conversion fails
+ * @returns Number representation or fallback
+ */
+export const safeDecimalToNumber = (
+  decimal?: Decimal | null,
+  fallback = 0,
+): number => {
+  if (!decimal) return fallback;
+  try {
+    return decimal.toNumber();
+  } catch {
+    return fallback;
+  }
+};
+
+/**
+ * Formats a date to display the last connection time in French
+ * @param date - The date to format (can be null or undefined)
+ * @returns Formatted date string or "Jamais connecté" if no date
+ */
+export const formatLastConnected = (date?: Date | null): string => {
+  if (!date) return "Jamais connecté";
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(date));
+};
+
+/**
+ * Formats a date to display in full format with time
+ * @param date - The date to format (can be null or undefined)
+ * @returns Formatted date string or "Jamais connecté" if no date
+ */
+export const formatLastConnectedFull = (date?: Date | null): string => {
+  if (!date) return "Jamais connecté";
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(date));
+};
+
+/**
+ * Relations counting utilities
+ */
+
+/**
+ * Counts the total number of relations (ongoing + potential + selected) for a PromoModule
+ * @param promoModule - The promo module to count relations for
+ * @returns Total number of relations
+ */
+export const getPromoModuleRelationsCount = (
+  promoModule: PromoModule,
+): number => {
+  const ongoing = promoModule.ongoing?.length ?? 0;
+  const potential = promoModule.potential?.length ?? 0;
+  const selected = promoModule.selected?.length ?? 0;
+  return ongoing + potential + selected;
+};
+
+/**
+ * Collection counting utilities for entities with promoModules
+ */
+
+interface EntityWithPromoModules {
+  promoModules?: PromoModule[];
+}
+
+/**
+ * Counts the number of promo modules for an entity (Promo or Module)
+ * @param entity - The entity with promoModules
+ * @returns Number of promo modules
+ */
+export const getPromoModulesCount = (
+  entity: EntityWithPromoModules,
+): number => {
+  return entity.promoModules?.length ?? 0;
+};
+
+/**
+ * Counts the total number of relations for an entity with promo modules
+ * @param entity - The entity with promoModules
+ * @returns Total number of relations across all promo modules
+ */
+export const getTotalRelationsCount = (
+  entity: EntityWithPromoModules,
+): number => {
+  if (!entity.promoModules) return 0;
+
+  return entity.promoModules.reduce((total, promoModule) => {
+    return total + getPromoModuleRelationsCount(promoModule);
+  }, 0);
+};
+
+/**
+ * Teacher utilities
+ */
+
+/**
+ * Gets the full name of a teacher
+ * @param teacher - The teacher object
+ * @returns Full name in "Firstname Lastname" format
+ */
+export const getTeacherFullName = (teacher: Teacher): string => {
+  return `${teacher.firstname} ${teacher.lastname}`;
+};
+
+/**
+ * Gets the display name of a teacher with status if available
+ * @param teacher - The teacher object
+ * @returns Display name with status
+ */
+export const getTeacherDisplayName = (teacher: Teacher): string => {
+  const fullName = getTeacherFullName(teacher);
+  return teacher.status ? `${fullName} (${teacher.status})` : fullName;
+};
+
+/**
+ * User utilities
+ */
+
+/**
+ * Gets the full name of a user
+ * @param user - The user object
+ * @returns Full name in "Firstname Lastname" format
+ */
+export const getUserFullName = (user: User): string => {
+  return `${user.firstname} ${user.lastname}`;
+};
+
+/**
+ * String utilities
+ */
+
+/**
+ * Capitalizes the first letter of a string
+ * @param str - The string to capitalize
+ * @returns Capitalized string
+ */
+export const capitalize = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+/**
+ * Truncates a string to a specified length with ellipsis
+ * @param str - The string to truncate
+ * @param maxLength - Maximum length of the string
+ * @returns Truncated string with ellipsis if needed
+ */
+export const truncateString = (str: string, maxLength: number): string => {
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength - 3) + "...";
+};
+
+/**
+ * Array utilities
+ */
+
+/**
+ * Groups an array of objects by a specified key
+ * @param array - The array to group
+ * @param key - The key to group by
+ * @returns Object with grouped items
+ */
+export const groupBy = <T, K extends keyof T>(
+  array: T[],
+  key: K,
+): Record<string, T[]> => {
+  return array.reduce(
+    (groups, item) => {
+      const groupKey = String(item[key]);
+      groups[groupKey] ??= [];
+      groups[groupKey].push(item);
+      return groups;
+    },
+    {} as Record<string, T[]>,
+  );
+};
+
+/**
+ * Removes duplicates from an array based on a key
+ * @param array - The array to deduplicate
+ * @param key - The key to use for comparison
+ * @returns Array without duplicates
+ */
+export const uniqueBy = <T, K extends keyof T>(array: T[], key: K): T[] => {
+  const seen = new Set();
+  return array.filter((item) => {
+    const keyValue = item[key];
+    if (seen.has(keyValue)) {
+      return false;
+    }
+    seen.add(keyValue);
+    return true;
+  });
+};
+
+/**
+ * Number utilities
+ */
+
+/**
+ * Formats a number as a percentage
+ * @param value - The value to format
+ * @param total - The total to calculate percentage from
+ * @param decimals - Number of decimal places (default: 1)
+ * @returns Formatted percentage string
+ */
+export const formatPercentage = (
+  value: number,
+  total: number,
+  decimals = 1,
+): string => {
+  if (total === 0) return "0%";
+  const percentage = (value / total) * 100;
+  return `${percentage.toFixed(decimals)}%`;
+};
+
+/**
+ * Teacher status utilities
+ */
+
+/**
+ * Get the appropriate CSS classes for teacher status badges
+ * @param status - The teacher status
+ * @returns CSS classes for the status badge
+ */
+export const getStatusBadgeColor = (status?: string | null): string => {
+  switch (status) {
+    case "Salaried":
+      return "bg-green-100 text-green-800";
+    case "Contractor":
+      return "bg-blue-100 text-blue-800";
+    case "To be recruited":
+      return "bg-orange-100 text-orange-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+/**
+ * Get the French display label for a teacher status
+ * (the underlying DB value stays in English)
+ * @param status - The teacher status
+ * @returns French label for display
+ */
+export const getStatusLabel = (status?: string | null): string => {
+  switch (status) {
+    case "Salaried":
+      return "Salarié";
+    case "Contractor":
+      return "Prestataire";
+    case "To be recruited":
+      return "À recruter";
+    default:
+      return status ?? "Non spécifié";
+  }
+};
+
+/**
+ * Get status color for relation types
+ * @param status - The relation status (ongoing, potential, selected)
+ * @returns CSS classes for the status
+ */
+export const getRelationStatusColor = (status: string): string => {
+  switch (status) {
+    case "ongoing":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "potential":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    case "selected":
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+/**
+ * Workload calculation utilities
+ */
+
+interface WorkloadItem {
+  workload: number;
+}
+
+/**
+ * Calculate total workload for a list of relations
+ * @param relations - Array of relations with workload property
+ * @returns Total workload
+ */
+export const getTotalWorkload = (relations?: WorkloadItem[]): number => {
+  return relations?.reduce((total, rel) => total + rel.workload, 0) ?? 0;
+};
+
+/**
+ * Get workload status color based on coverage percentage
+ * @param coverage - Coverage percentage
+ * @returns CSS classes for workload status
+ */
+export const getWorkloadStatusColor = (coverage: number): string => {
+  if (coverage < 50) return "text-red-600 bg-red-50";
+  if (coverage < 80) return "text-orange-600 bg-orange-50";
+  if (coverage <= 100) return "text-green-600 bg-green-50";
+  return "text-purple-600 bg-purple-50"; // Over-allocated
+};
+
+/**
+ * Get workload status text based on coverage percentage
+ * @param coverage - Coverage percentage
+ * @returns Descriptive text for workload status
+ */
+export const getWorkloadStatusText = (coverage: number): string => {
+  if (coverage < 50) return "Sous-alloué";
+  if (coverage < 80) return "Partiellement alloué";
+  if (coverage <= 100) return "Correctement alloué";
+  return "Sur-alloué";
+};
+
+/**
+ * Format rate display
+ * @param rate - The rate value
+ * @returns Formatted rate string
+ */
+export const formatRate = (rate?: number | null): string => {
+  return rate ? `${rate}€/h` : "Non spécifié";
+};
+
+/**
+ * Assignation cost calculation (TDP/FFP split vs standard hourly rate)
+ */
+
+export type CalculationMode = "standard" | "tdp_ffp";
+
+export interface AssignationCostInput {
+  workload: number;
+  rate?: number | null;
+  rateTDP?: number | null;
+  rateFFP?: number | null;
+  teacherRate?: number | null;
+  moduleNombreHeureTDP?: number | null;
+  moduleNombreHeureFFP?: number | null;
+}
+
+export interface AssignationCostResult {
+  cost: number;
+  mode: CalculationMode;
+}
+
+/**
+ * Computes the cost of an assignation.
+ * Uses the TDP/FFP split (module hours * relation rates) only when both the
+ * module's TDP/FFP hours and the relation's TDP/FFP rates are set; otherwise
+ * falls back to workload * standard rate (relation rate, then teacher rate).
+ */
+export const calculateAssignationCost = (
+  input: AssignationCostInput,
+): AssignationCostResult => {
+  const moduleHasSplit =
+    input.moduleNombreHeureTDP != null && input.moduleNombreHeureFFP != null;
+  const relationHasSplit = input.rateTDP != null && input.rateFFP != null;
+
+  if (moduleHasSplit && relationHasSplit) {
+    const cost =
+      input.moduleNombreHeureTDP! * input.rateTDP! +
+      input.moduleNombreHeureFFP! * input.rateFFP!;
+    return { cost: Math.round(cost * 100) / 100, mode: "tdp_ffp" };
+  }
+
+  const rate = input.rate ?? input.teacherRate ?? 0;
+  return {
+    cost: Math.round(input.workload * rate * 100) / 100,
+    mode: "standard",
+  };
+};
+
+export const getCalculationModeColor = (mode: CalculationMode): string =>
+  mode === "tdp_ffp"
+    ? "bg-blue-100 text-blue-800 border-blue-200"
+    : "bg-gray-100 text-gray-700 border-gray-200";
+
+export const getCalculationModeLabel = (mode: CalculationMode): string =>
+  mode === "tdp_ffp" ? "TDP/FFP" : "Standard";
+
+/**
+ * Validation utilities
+ */
+
+/**
+ * Validates an email address
+ * @param email - The email to validate
+ * @returns True if email is valid
+ */
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+/**
+ * Validates a phone number (basic French format)
+ * @param phone - The phone number to validate
+ * @returns True if phone number is valid
+ */
+export const isValidPhoneNumber = (phone: string): boolean => {
+  const phoneRegex = /^(?:(?:\+33|0)[1-9](?:[0-9]{8}))$/;
+  return phoneRegex.test(phone.replace(/\s/g, ""));
+};
