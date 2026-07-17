@@ -6,6 +6,7 @@ import { notifications } from "@mantine/notifications";
 import { LuShare2, LuX, LuPlus, LuTrash2, LuUsers } from "react-icons/lu";
 import { api } from "~/trpc/react";
 
+// Constants
 const MAX_PROMOS_PER_MODULE = 3;
 
 interface MutualizeModuleModalProps {
