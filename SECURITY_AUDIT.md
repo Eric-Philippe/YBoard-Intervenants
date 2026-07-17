@@ -56,7 +56,7 @@ teachers.getAll   avec jeton -> HTTP 200  (nominal, attendu)
 
 **Correctif.** Suppression des cinq replis, au profit d'un accesseur unique `getJwtSecret()` (`src/server/jwt.ts`) qui lit `env.JWT_SECRET` et **lève une erreur explicite** en son absence. La résolution intervient à l'appel et non au chargement du module, afin de ne pas casser la construction de l'image Docker.
 
-**Vérification.** Un jeton forgé avec le secret d'exemple a été accepté avant rotation, ce qui confirme l'exploitabilité. La fermeture effective de cette faille **dépend de la rotation du secret en production** (voir section 5, action A-02).
+**Vérification.** Un jeton forgé avec le secret d'exemple a été accepté avant rotation, ce qui confirme l'exploitabilité. La fermeture effective de cette faille **dépend de la rotation du secret en production**.
 
 ---
 
@@ -215,20 +215,7 @@ Le cas le plus grave concerne `/api/sondage/export` : **le questionnaire est pub
 
 ---
 
-## 4. Actions hors code
-
-Ces mesures ne relèvent pas du code applicatif et **conditionnent l'efficacité des correctifs**.
-
-| Réf. | Action                                                                                                                 | Priorité      | Justification                                                                                                                                                                                                         |
-| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
-| A-01 | Retirer les identifiants par défaut du `README` public et changer le mot de passe du compte concerné.                  | **Immédiate** | Le dépôt est public et documentait un couple identifiant/mot de passe fonctionnel.                                                                                                                                    |
-| A-02 | **Faire tourner `JWT_SECRET`** en production, avec une valeur aléatoire longue transmise par variable d'environnement. | **Immédiate** | Tant que le secret publié reste en place, les correctifs de la section 2.1 sont contournables par un jeton forgé. La rotation invalide de surcroît tous les jetons existants, y compris ceux d'un éventuel intrus.    |     |
-| A-03 | Examiner les journaux d'accès du serveur web sur `/api/trpc/*` et `/api/cv/*`.                                         | Haute         | Seule source permettant d'établir si une exfiltration a eu lieu, l'application ne journalisant rien (R-06). En cas de fuite avérée de données personnelles, une notification à la CNIL sous 72 heures peut s'imposer. |
-| A-04 | Envisager le passage du dépôt en privé.                                                                                | Moyenne       | À défaut, toute configuration versionnée doit être considérée comme publique.                                                                                                                                         |
-
----
-
-## 6. Conclusion
+## 4. Conclusion
 
 Les expositions les plus graves, à savoir l'accès non authentifié à certaines routes de l'API et la possibilité de forger des jetons administrateur, sont corrigées et vérifiées. La surface d'attaque a été sensiblement réduite : 8 procédures publiques ramenées à 4, deux dépendances mortes supprimées, vulnérabilités critiques éliminées.
 
